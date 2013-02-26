@@ -30,11 +30,11 @@
 			if (kind == Closure.UPCALL_FINAL) {
 				// Do nothing.
 			} else if (kind == Closure.UPCALL_CONTENT) {
-				console.log("Closure.upcall: content signature verification pass.");
+				//console.log("Closure.upcall: content signature verification pass.");
 				var content = upcallInfo.contentObject;
 				//console.log(content.name);
-				nameStr = escape(content.name.getName());
-				document.getElementById('content').innerHTML += "<p>Name string: " + nameStr + "</p>";
+				nameStr = content.name.getName();
+				document.getElementById('content').innerHTML = "<p>Name string: " + nameStr + "</p>";
 				document.getElementById('content').innerHTML += "<p>Content buffer length: " + content.content.length + "</p>";
 				//console.log("In callback, nameStr: " + nameStr);
 				//console.log("In callback, content: ");
@@ -70,7 +70,7 @@
 
 	<button id="testBtn" onclick="run()" disabled="disabled">Fetch Content</button>
 	
-	<p id="content">Content: <br/></p>
+	<p id="content"><br/></p>
 
 </body>
 </html>

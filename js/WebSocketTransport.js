@@ -6,10 +6,6 @@
 var WebSocketTransport = function WebSocketTransport() {    
 	this.ws = null;
     this.elementReader = null;
-    this.defaultGetHostAndPort = NDN.makeShuffledGetHostAndPort
-        (["A.ws.ndn.ucla.edu", "B.ws.ndn.ucla.edu", "C.ws.ndn.ucla.edu", "D.ws.ndn.ucla.edu", 
-          "E.ws.ndn.ucla.edu"],
-         9696);
 };
 
 WebSocketTransport.prototype.connectWebSocket = function(ndn) {
