@@ -1,0 +1,253 @@
+<?xml version = "1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"DTD/xhtml1-strict.dtd">
+<html xmlns = "http://www.w3.org/1999/xhtml">
+<meta charset="UTF-8">
+
+<head>
+	<title>NDN Get File via WebSocket</title>
+	
+	<script type="text/javascript" src="../tools/build/ndn-js-uncomp.js"></script>
+
+	<script type="text/javascript">
+		//hostip = "131.179.196.232";
+		hostip = "localhost";
+		//var ndncon = new NDN({port:9696,host:hostip});
+		var ndncon = new NDN({port:9696,host:hostip,verify:false});
+        ndncon.transport.connectWebSocket(ndncon);
+        
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+        var MerkleHashNode = function MerkleHashNode(hash, index) {
+        	this.hash = hash;
+        	this.index = index;
+        };
+        
+        /*
+		 * Closure for calling expressInterest to fetch big file.
+		 */                                                
+		var ContentClosure = function ContentClosure(ndn, T0) {
+		    // Inherit from Closure.
+		    Closure.call(this);
+		    
+		    this.T0 = T0;
+		    this.ndn = ndn;
+			this.totalBlocks = 0;
+		    
+		    this.firstReceivedSegmentNumber = null;
+		    this.firstReceivedContentObject = null;
+		    
+		    this.merkleHashTree = [];
+		    this.rsaKey = decodeSubjectPublicKeyInfo(DataUtils.toNumbers(
+		    	"30819F300D06092A864886F70D010101050003818D0030818902818100C09E4FAF7E9F9B3BC4E67482F456E5E54B2E6F64BA36C2F33343C5D22AD94F9ECB86C912D2DA58CD9B2C62DF75B6C7AC91DFB380468A25F3D1FFF177380D2D3BAE506C11649E9FAEF5875EF7197262A40CB352C45850E56E0BA6A96CE34D3F97F522580EDF36600D1E06420B7758CED2E938B17316870ABDA00C7B10D2861F010203010001"));
+		}
+		
+		ContentClosure.prototype.verifySegments = function(key, sig, lastIndex) {
+			var i = lastIndex - 1;
+			while (i > 0) {
+		    	var str = this.merkleHashTree[i - 1].hash + this.merkleHashTree[i].hash;
+		    	var hash = hex_sha256_from_bytes(DataUtils.toNumbers(str));
+		    	var node = new MerkleHashNode(hash, Math.floor(i / 2));
+		    	// Remove the curent two nodes and put their parent node into the array on their position
+		    	this.merkleHashTree[node.index - 1] = node;
+		    	i = i - 2;
+	    	}
+	    	
+	    	var root = this.merkleHashTree[0];
+	    	this.merkleHashTree = [];
+	    	
+	    	return key.verifyByteArray(DataUtils.toNumbers(root.hash), null, sig);
+	    };
+		
+		ContentClosure.prototype.upcall = function(kind, upcallInfo) {
+		    if (kind == Closure.UPCALL_INTEREST_TIMED_OUT) {
+		    	var T1 = new Date();
+		    	document.getElementById('content').innerHTML += "<p>Interest time out.</p>";
+		        document.getElementById('content').innerHTML += "<p>Time elapsed: " + (T1 - this.T0) + " ms including 4s timeout</p>";
+		        document.getElementById('content').innerHTML += "<p>Total number of blocks: " + this.totalBlocks + "</p>";
+		        return Closure.RESULT_OK;
+		    }
+		    
+		    if (kind == Closure.UPCALL_CONTENT_BAD) {
+		    	console.log("NdnProtocol.ContentClosure: signature verification failed");
+		    	console.log(upcallInfo.contentObject.name.getName());
+		    	console.log(DataUtils.toHex(upcallInfo.contentObject.signature.Witness).toLowerCase());
+		    	return Closure.RESULT_OK;
+		    }
+		    
+		    if (!(kind == Closure.UPCALL_CONTENT ||
+		          kind == Closure.UPCALL_CONTENT_UNVERIFIED))
+		        // The upcall is not for us.
+		        return Closure.RESULT_ERR;
+		    
+		    var contentObject = upcallInfo.contentObject;
+		    if (contentObject.content == null) {
+		        console.log("NdnProtocol.ContentClosure: contentObject.content is null");
+		        return Closure.RESULT_ERR;
+		    }
+		
+		    // Use the segmentNumber to load multiple segments.
+		    //var segmentNumber = ArrayToNum(contentObject.name.components[contentObject.name.components.length - 1]);
+		    var segmentNumber = DataUtils.bigEndianToUnsignedInt
+		    						(contentObject.name.components[contentObject.name.components.length - 1]);
+		    //console.log(segmentNumber);
+		    
+		    /* XXX: we assume the first segment is always #0
+	        if (this.firstReceivedSegmentNumber == null) {
+	            // This is the first call.
+	            this.firstReceivedSegmentNumber = segmentNumber;
+	            if (segmentNumber != 0) {
+	                // Special case: Save this content object for later and request segment zero.
+	                this.firstReceivedContentObject = contentObject;
+	                var componentsForZero = contentObject.name.components.slice
+	                    (0, contentObject.name.components.length - 1);
+	                componentsForZero.push([0]);
+	                this.ndn.expressInterest(new Name(componentsForZero), this);
+	                return Closure.RESULT_OK;
+	            }
+	        }
+	        */
+		    
+		    // Process received data here...
+		    // Count content length
+		    //nameStr = escape(contentObject.name.getName());
+			//document.getElementById('content').innerHTML += "<p>Name string: " + nameStr + "</p>";
+			//document.getElementById('content').innerHTML += "<p>Content buffer length: " + contentObject.content.length + "</p>";
+			this.totalBlocks++;
+		    
+		    /* XXX: we assume the first segment is always #0
+		    // Check for the special case if the saved content is for the next segment that we need.
+		    if (this.firstReceivedContentObject != null && 
+		        this.firstReceivedSegmentNumber == segmentNumber + 1) {
+		        // Substitute the saved contentObject send its content and keep going.
+		        contentObject = this.firstReceivedContentObject;
+		        segmentNumber = segmentNumber + 1;
+		        // Clear firstReceivedContentObject to save memory.
+		        this.firstReceivedContentObject = null;
+		        
+		        // Process received data here...
+		    	// Count content length
+		    	//nameStr = escape(contentObject.name.getName());
+				//document.getElementById('content').innerHTML += "<p>Name string: " + nameStr + "</p>";
+				//document.getElementById('content').innerHTML += "<p>Content buffer length: " + contentObject.content.length + "</p>";
+				this.totalBlocks++;
+		    }
+		    */
+		   
+		   // Create Merkle hash node for this segment
+		    var wit = new Witness();
+			wit.decode(contentObject.signature.Witness);
+			var hash = hex_sha256_from_bytes(contentObject.rawSignatureData);
+		    var node = new MerkleHashNode(hash, wit.path.index);
+		    //console.log(node.index);
+		    this.merkleHashTree[node.index - 1] = node;
+		    
+		    var sigHex = DataUtils.toHex(contentObject.signature.signature).toLowerCase();
+		
+		    var finalSegmentNumber = null;
+		    if (contentObject.signedInfo != null && contentObject.signedInfo.finalBlockID != null)
+		        finalSegmentNumber = DataUtils.bigEndianToUnsignedInt(contentObject.signedInfo.finalBlockID);
+		    
+		    if (finalSegmentNumber == null || segmentNumber != finalSegmentNumber) {
+		    	// If we received a full group of 128 segments, verify now
+		    	if (wit.path.index == 255) {
+		    		var ret = this.verifySegments(this.rsaKey, sigHex, wit.path.index);
+		    		if (ret == false) {
+		    			// Failed to verify this group of segments, we can abort fetching now
+		    			console.log(wit);
+		    			console.log("Group signature verification failed on segment " + segmentNumber);
+		    			return Closure.RESULT_OK;
+		    		}
+		    	}
+		    	
+		    	// Fetch the next segment
+		    	
+		        // Make a name for the next segment and get it.
+		        var segmentNumberPlus1 = DataUtils.nonNegativeIntToBigEndian(segmentNumber + 1);
+		        // Put a 0 byte in front.
+		        var nextSegmentNumber = new Uint8Array(segmentNumberPlus1.length + 1);
+		        nextSegmentNumber.set(segmentNumberPlus1, 1);
+        		
+		        var components = contentObject.name.components.slice
+		            (0, contentObject.name.components.length - 1);
+		        components.push(nextSegmentNumber);
+		        //components.push(segmentNumberPlus1);
+		        this.ndn.expressInterest(new Name(components), this);
+		    }
+		    else {
+		        // Final block received.
+	    		var ret = this.verifySegments(this.rsaKey, sigHex, wit.path.index);
+	    		if (ret == false) {
+	    			// Failed to verify this group of segments, we can abort fetching now
+	    			console.log("NdnProtocol.ContentClosure: last group signature verification failed");
+	    			return Closure.RESULT_OK;
+	    		}
+		    	
+		    	//console.log("Group signature verification success");
+		    	
+		        // Content segments verified.
+		        // Record stop time
+		        var T1 = new Date();
+		        document.getElementById('content').innerHTML += "<p>Final block received.</p>";
+		        document.getElementById('content').innerHTML += "<p>Time elapsed: " + (T1 - this.T0) + " ms</p>";
+		        document.getElementById('content').innerHTML += "<p>Total number of blocks: " + this.totalBlocks + "</p>";
+		    }
+		        
+		    return Closure.RESULT_OK;
+		};
+		
+		/*
+		 * Convert the big endian Uint8Array to an unsigned int.
+		 * Don't check for overflow.
+		 */
+		function ArrayToNum(bytes) {
+		    var result = 0;
+		    for (var i = 0; i < bytes.length; ++i) {
+		        result = result * 10;
+		        result += (bytes[i] - 48);
+		    }
+		    return result;
+		};
+		
+		/*
+		 * Convert the int value to a new big endian Uint8Array and return.
+		 * If value is 0 or negative, return Uint8Array(0). 
+		 */
+		function NumToArray(value) {
+		    value = Math.round(value);
+		    if (value <= 0)
+		        return new Uint8Array(0);
+		    
+		    numString = value.toString();
+		    var size = numString.length;
+		    var result = new Uint8Array(size);
+		    for (i = 0; i < size; i++) {
+		    	result[i] = numString.charCodeAt(i);
+		    }
+		    return result;
+		};
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+		
+		function run() {
+			document.getElementById('content').innerHTML += "<p>Started...</p>";
+			
+			var name = new Name(document.getElementById('interest').value);
+            ndncon.expressInterest( name, 
+                    new ContentClosure( ndncon, new Date() ));
+		}
+		
+	</script>
+	
+</head>
+<body >
+
+	<form>
+		Please Enter an Interest:<br />
+		<input id="interest" type="text" name="INTEREST" size="50" value="/wentao.shang/oreshura.jpg/%00" /> 
+	</form>
+
+	<button onclick="run()">Fetch Content</button>
+	
+	<p id="content">Result: <br/></p>
+
+</body>
+</html>
