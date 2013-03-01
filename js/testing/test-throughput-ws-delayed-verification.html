@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 
 <head>
-	<title>NDN Get File via WebSocket</title>
+	<title>NDN Fetch File via WebSocket using Group Verification</title>
 	
 	<script type="text/javascript" src="../tools/build/ndn-js-uncomp.js"></script>
 
@@ -39,7 +39,7 @@
 		    this.merkleHashTree = [];
 		    this.rsaKey = decodeSubjectPublicKeyInfo(DataUtils.toNumbers(
 		    	"30819F300D06092A864886F70D010101050003818D0030818902818100C09E4FAF7E9F9B3BC4E67482F456E5E54B2E6F64BA36C2F33343C5D22AD94F9ECB86C912D2DA58CD9B2C62DF75B6C7AC91DFB380468A25F3D1FFF177380D2D3BAE506C11649E9FAEF5875EF7197262A40CB352C45850E56E0BA6A96CE34D3F97F522580EDF36600D1E06420B7758CED2E938B17316870ABDA00C7B10D2861F010203010001"));
-		}
+		};
 		
 		ContentClosure.prototype.verifySegments = function(key, sig, lastIndex) {
 			var i = lastIndex - 1;
@@ -132,8 +132,8 @@
 				this.totalBlocks++;
 		    }
 		    */
-		   
-		   // Create Merkle hash node for this segment
+		    
+		    // Create Merkle hash node for this segment
 		    var wit = new Witness();
 			wit.decode(contentObject.signature.Witness);
 			var hash = hex_sha256_from_bytes(contentObject.rawSignatureData);
