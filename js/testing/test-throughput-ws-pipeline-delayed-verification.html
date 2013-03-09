@@ -304,36 +304,6 @@
 			return Closure.RESULT_OK;
 		};
 		
-		/*
-		 * Convert the big endian Uint8Array to an unsigned int.
-		 * Don't check for overflow.
-		 */
-		function ArrayToNum(bytes) {
-		    var result = 0;
-		    for (var i = 0; i < bytes.length; ++i) {
-		        result = result * 10;
-		        result += (bytes[i] - 48);
-		    }
-		    return result;
-		}
-		
-		/*
-		 * Convert the int value to a new big endian Uint8Array and return.
-		 * If value is 0 or negative, return Uint8Array(0). 
-		 */
-		function NumToArray(value) {
-		    value = Math.round(value);
-		    if (value <= 0)
-		        return new Uint8Array(0);
-		    
-		    numString = value.toString();
-		    var size = numString.length;
-		    var result = new Uint8Array(size);
-		    for (i = 0; i < size; i++) {
-		    	result[i] = numString.charCodeAt(i);
-		    }
-		    return result;
-		}
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
         
         /*

@@ -1327,13 +1327,15 @@ Date.prototype.format = function (mask, utc) {
 	return dateFormat(this, mask, utc);
 };
 /**
- * @author: Meki Cheraoui
+ * @author: Meki Cheraoui, Jeff Thompson
  * See COPYING for copyright and distribution information.
  * This class represents Interest Objects
  */
 
 // _interestLifetime is in milliseconds.
-var Interest = function Interest(_name,_faceInstance,_minSuffixComponents,_maxSuffixComponents,_publisherPublicKeyDigest, _exclude, _childSelector,_answerOriginKind,_scope,_interestLifetime,_nonce){
+var Interest = function Interest
+   (_name, _faceInstance, _minSuffixComponents, _maxSuffixComponents, _publisherPublicKeyDigest, _exclude, 
+    _childSelector, _answerOriginKind, _scope, _interestLifetime, _nonce) {
 		
 	this.name = _name;
 	this.faceInstance = _faceInstance;
@@ -1442,102 +1444,185 @@ Interest.prototype.to_ccnb = function(/*XMLEncoder*/ encoder){
 
 };
 
-Interest.prototype.matches_name = function(/*Name*/ name) {
-    return this.name.match(name);
-}
-
-/**
- * Exclude
+/*
+ * Return true if this.name.match(name) and the name conforms to the interest selectors.
  */
-var Exclude = function Exclude(_values){ 
-	
-	this.OPTIMUM_FILTER_SIZE = 100;
-	
+Interest.prototype.matches_name = function(/*Name*/ name) {
+    if (!this.name.match(name))
+        return false;
+    
+    if (this.minSuffixComponents != null &&
+        // Add 1 for the implicit digest.
+        !(name.components.length + 1 - this.name.components.length >= this.minSuffixComponents))
+        return false;
+    if (this.maxSuffixComponents != null &&
+        // Add 1 for the implicit digest.
+        !(name.components.length + 1 - this.name.components.length <= this.maxSuffixComponents))
+        return false;
+    if (this.exclude != null && name.components.length > this.name.components.length &&
+        this.exclude.matches(name.components[this.name.components.length]))
+        return false;
+    
+    return true;
+};
 
-	this.values = _values; //array of elements
-	
+/*
+ * Return a new Interest with the same fields as this Interest.  
+ * Note: This does NOT make a deep clone of the name, exclue or other objects.
+ */
+Interest.prototype.clone = function() {
+    return new Interest
+       (this.name, this.faceInstance, this.minSuffixComponents, this.maxSuffixComponents, 
+        this.publisherPublicKeyDigest, this.exclude, this.childSelector, this.answerOriginKind, 
+        this.scope, this.interestLifetime, this.nonce);
+};
+
+/*
+ * Handle the interest Exclude element.
+ * _values is an array where each element is either Uint8Array component or Exclude.ANY.
+ */
+var Exclude = function Exclude(_values) { 
+	this.values = (_values || []);
 }
+
+Exclude.ANY = "*";
 
 Exclude.prototype.from_ccnb = function(/*XMLDecoder*/ decoder) {
+	decoder.readStartElement(CCNProtocolDTags.Exclude);
 
-
-		
-		decoder.readStartElement(this.getElementLabel());
-
-		//TODO APPLY FILTERS/EXCLUDE
-		
-		//TODO 
-		/*var component;
-		var any = false;
-		while ((component = decoder.peekStartElement(CCNProtocolDTags.Component)) || 
-				(any = decoder.peekStartElement(CCNProtocolDTags.Any)) ||
-					decoder.peekStartElement(CCNProtocolDTags.Bloom)) {
-			var ee = component?new ExcludeComponent(): any ? new ExcludeAny() : new BloomFilter();
-			ee.decode(decoder);
-			_values.add(ee);
-		}*/
-
-		decoder.readEndElement();
-
+	while (true) {
+        if (decoder.peekStartElement(CCNProtocolDTags.Component))
+            this.values.push(decoder.readBinaryElement(CCNProtocolDTags.Component));
+        else if (decoder.peekStartElement(CCNProtocolDTags.Any)) {
+            decoder.readStartElement(CCNProtocolDTags.Any);
+            decoder.readEndElement();
+            this.values.push(Exclude.ANY);
+        }
+        else if (decoder.peekStartElement(CCNProtocolDTags.Bloom)) {
+            // Skip the Bloom and treat it as Any.
+            decoder.readBinaryElement(CCNProtocolDTags.Bloom);
+            this.values.push(Exclude.ANY);
+        }
+        else
+            break;
+	}
+    
+    decoder.readEndElement();
 };
 
-Exclude.prototype.to_ccnb=function(/*XMLEncoder*/ encoder)  {
-		if (!validate()) {
-			throw new ContentEncodingException("Cannot encode " + this.getClass().getName() + ": field values missing.");
-		}
+Exclude.prototype.to_ccnb = function(/*XMLEncoder*/ encoder)  {
+	if (this.values == null || this.values.length == 0)
+		return;
 
-		if (empty())
-			return;
+	encoder.writeStartElement(CCNProtocolDTags.Exclude);
+    
+    // TODO: Do we want to order the components (except for ANY)?
+    for (var i = 0; i < this.values.length; ++i) {
+        if (this.values[i] == Exclude.ANY) {
+            encoder.writeStartElement(CCNProtocolDTags.Any);
+            encoder.writeEndElement();
+        }
+        else
+            encoder.writeElement(CCNProtocolDTags.Component, this.values[i]);
+    }
 
-		encoder.writeStartElement(getElementLabel());
+	encoder.writeEndElement();
+};
 
-		encoder.writeEndElement();
-		
-	};
-
-Exclude.prototype.getElementLabel = function() { return CCNProtocolDTags.Exclude; };
-
-
-/**
- * ExcludeAny
+/*
+ * Return a string with elements separated by "," and Exclude.ANY shown as "*". 
  */
-var ExcludeAny = function ExcludeAny() {
+Exclude.prototype.to_uri = function() {
+	if (this.values == null || this.values.length == 0)
+		return "";
 
+    var result = "";
+    for (var i = 0; i < this.values.length; ++i) {
+        if (i > 0)
+            result += ",";
+        
+        if (this.values[i] == Exclude.ANY)
+            result += "*";
+        else
+            result += Name.toEscapedString(this.values[i]);
+    }
+    return result;
 };
 
-ExcludeAny.prototype.from_ccnb = function(decoder) {
-		decoder.readStartElement(this.getElementLabel());
-		decoder.readEndElement();
-};
-
-
-ExcludeAny.prototype.to_ccnb = function( encoder) {
-		encoder.writeStartElement(this.getElementLabel());
-		encoder.writeEndElement();
-};
-
-ExcludeAny.prototype.getElementLabel=function() { return CCNProtocolDTags.Any; };
-
-
-/**
- * ExcludeComponent
+/*
+ * Return true if the component matches any of the exclude criteria.
  */
-var ExcludeComponent = function ExcludeComponent(_body) {
-
-	//TODO Check BODY is an Array of componenets.
-	
-	this.body = _body
+Exclude.prototype.matches = function(/*Uint8Array*/ component) {
+    for (var i = 0; i < this.values.length; ++i) {
+        if (this.values[i] == Exclude.ANY) {
+            var lowerBound = null;
+            if (i > 0)
+                lowerBound = this.values[i - 1];
+            
+            // Find the upper bound, possibly skipping over multiple ANY in a row.
+            var iUpperBound;
+            var upperBound = null;
+            for (iUpperBound = i + 1; iUpperBound < this.values.length; ++iUpperBound) {
+                if (this.values[iUpperBound] != Exclude.ANY) {
+                    upperBound = this.values[iUpperBound];
+                    break;
+                }
+            }
+            
+            // If lowerBound != null, we already checked component equals lowerBound on the last pass.
+            // If upperBound != null, we will check component equals upperBound on the next pass.
+            if (upperBound != null) {
+                if (lowerBound != null) {
+                    if (Exclude.compareComponents(component, lowerBound) > 0 &&
+                        Exclude.compareComponents(component, upperBound) < 0)
+                        return true;
+                }
+                else {
+                    if (Exclude.compareComponents(component, upperBound) < 0)
+                        return true;
+                }
+                
+                // Make i equal iUpperBound on the next pass.
+                i = iUpperBound - 1;
+            }
+            else {
+                if (lowerBound != null) {
+                    if (Exclude.compareComponents(component, lowerBound) > 0)
+                        return true;
+                }
+                else
+                    // this.values has only ANY.
+                    return true;
+            }
+        }
+        else {
+            if (DataUtils.arraysEqual(component, this.values[i]))
+                return true;
+        }
+    }
+    
+    return false;
 };
 
-ExcludeComponent.prototype.from_ccnb = function( decoder)  {
-		this.body = decoder.readBinaryElement(this.getElementLabel());
-};
+/*
+ * Return -1 if component1 is less than component2, 1 if greater or 0 if equal.
+ * A component is less if it is shorter, otherwise if equal length do a byte comparison.
+ */
+Exclude.compareComponents = function(/*Uint8Array*/ component1, /*Uint8Array*/ component2) {
+    if (component1.length < component2.length)
+        return -1;
+    if (component1.length > component2.length)
+        return 1;
+    
+    for (var i = 0; i < component1.length; ++i) {
+        if (component1[i] < component2[i])
+            return -1;
+        if (component1[i] > component2[i])
+            return 1;
+    }
 
-ExcludeComponent.prototype.to_ccnb = function(encoder) {
-		encoder.writeElement(this.getElementLabel(), this.body);
+    return 0;
 };
-
-ExcludeComponent.prototype.getElementLabel = function() { return CCNProtocolDTags.Component; };
 /**
  * @author: Meki Cheraoui
  * See COPYING for copyright and distribution information.
