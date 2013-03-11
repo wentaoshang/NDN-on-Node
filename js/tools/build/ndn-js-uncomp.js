@@ -464,10 +464,13 @@ var Name = function Name(_components){
 		this.components = Name.createNameArray(_components);
 	}
 	else if(typeof _components === 'object'){		
-		if(LOG>4)console.log('Content Name Array '+_components);
 		this.components = [];
-        for (var i = 0; i < _components.length; ++i)
-            this.add(_components[i]);
+        if (_components instanceof Name)
+            this.add(_components);
+        else {
+            for (var i = 0; i < _components.length; ++i)
+                this.add(_components[i]);
+        }
 	}
 	else if(_components==null)
 		this.components =[];
@@ -572,10 +575,10 @@ Name.prototype.getElementLabel = function(){
 };
 
 /*
- * component is a string, byte array, ArrayBuffer or Uint8Array.
+ * component is a string, byte array, ArrayBuffer, Uint8Array or Name.
  * Convert to Uint8Array and add to this Name.
  * If a component is a string, encode as utf8.
- * Return the converted value.
+ * Return this Name object to allow chaining calls to add.
  */
 Name.prototype.add = function(component){
     var result;
@@ -588,6 +591,18 @@ Name.prototype.add = function(component){
         result = new Uint8Array(new ArrayBuffer(component.byteLength));
         result.set(new Uint8Array(component));
     }
+    else if (typeof component == 'object' && component instanceof Name) {
+        var components;
+        if (component == this)
+            // special case, when we need to create a copy
+            components = this.components.slice(0, this.components.length);
+        else
+            components = component.components;
+        
+        for (var i = 0; i < components.length; ++i)
+            this.components.push(new Uint8Array(components[i]));
+        return this;
+    }
 	else if(typeof component == 'object')
         // Assume component is a byte array.  We can't check instanceof Array because
         //   this doesn't work in JavaScript if the array comes from a different module.
@@ -596,7 +611,8 @@ Name.prototype.add = function(component){
 		throw new Error("Cannot add Name element at index " + this.components.length + 
             ": Invalid type");
     
-	return this.components.push(result);
+    this.components.push(result);
+	return this;
 };
 
 // Return the escaped name string according to "CCNx URI Scheme".
