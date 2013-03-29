@@ -1,0 +1,68 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>NameCrypto for NDN.JS</title>
+	
+	<script type="text/javascript" src="../tools/build/ndn-js.js"></script>
+	<script type="text/javascript" src="../security/NameCrypto.js"></script>
+
+	<script type="text/javascript">
+	
+		function testNameCrypto() {
+			var result = document.getElementById('result');
+			
+			var publicKeyBytes = DataUtils.toNumbers(globalKeyManager.publicKey);
+			var locator = new KeyLocator(publicKeyBytes, KeyLocatorType.KEY);
+			var enc = new BinaryXMLEncoder();
+			locator.to_ccnb(enc);
+			var n_loc = enc.getReducedOstream();
+			//console.log(n_loc);
+			
+			//result.innerHTML += DataUtils.toHex(enc.getReducedOstream()) + '<br />';
+			
+			var name = new Name("/ndn/ucla.edu/apps/cuerda");
+			name.add(n_loc);
+			var name1 = new Name("/ndn/ucla.edu/apps/cuerda");
+			
+			var app_code = "cuerda";
+			
+			var rsa = new RSAKey();
+			
+			rsa.readPrivateKeyFromPEMString(globalKeyManager.privateKey);
+			
+			var state = new NameCryptoState();
+			
+			var ret = NameCrypto.authenticate_name_asymm(state, name, app_code, rsa);
+			
+			result.innerHTML += '<p>' + ret.getName() + '</p>';
+			
+			var ret1 = NameCrypto.verify_name_asymm(ret);
+			
+			result.innerHTML += '<p>' + ret1 + '</p>';
+			
+			var secret = '1234567812345678';
+			
+			var app_key = NameCrypto.generate_symmetric_key(secret, app_code);
+			
+			var ret2 = NameCrypto.authenticate_name_symm(state, name1, app_code, app_key);
+			
+			result.innerHTML += '<p>' + ret2.getName() + '</p>';
+			
+			var ret3 = NameCrypto.verify_name_symm(ret2, secret, app_code);
+			
+			result.innerHTML += '<p>' + ret3 + '</p>';
+		}
+		
+	</script>
+
+</head>
+<body >
+	<button onclick="testNameCrypto()">Test</button>
+	
+	<div id="result">
+		
+	</div>
+
+</body>
+</html>
