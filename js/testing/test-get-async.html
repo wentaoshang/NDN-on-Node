@@ -13,7 +13,7 @@
 	<script type="text/javascript" src="../tools/build/ndn-js.js"></script>
 
 	<script type="text/javascript">
-		var ndn = new NDN({port:9695,host:"localhost"});
+		var ndn = new NDN({port:9696,host:"localhost"});
         ndn.transport.connectWebSocket(ndn);
         
         ndn.onopen = function() {
@@ -55,7 +55,11 @@
 		
 		
 		function run() {
-			ndn.expressInterest(new Name(document.getElementById('interest').value), new AsyncGetClosure());
+			var template = new Interest();
+			template.childSelector = 1;
+			template.answerOriginKind = 0;
+			template.interestLifetime = 3000;
+			ndn.expressInterest(new Name(document.getElementById('interest').value), new AsyncGetClosure(), template);
 		}
 		
 	</script>
