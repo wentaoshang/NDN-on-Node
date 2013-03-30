@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<title>NameCrypto for NDN.JS</title>
 	
-	<script type="text/javascript" src="../tools/build/ndn-js.js"></script>
+	<script type="text/javascript" src="../tools/build/ndn-js-uncomp.js"></script>
 	<script type="text/javascript" src="../security/NameCrypto.js"></script>
 
 	<script type="text/javascript">
@@ -42,6 +42,7 @@
 			result.innerHTML += '<p>' + ret1 + '</p>';
 			
 			var secret = '1234567812345678';
+			var timeout = 3000;  // in ms
 			
 			var app_key = NameCrypto.generate_symmetric_key(secret, app_code);
 			
@@ -49,7 +50,7 @@
 			
 			result.innerHTML += '<p>' + ret2.getName() + '</p>';
 			
-			var ret3 = NameCrypto.verify_name_symm(ret2, secret, app_code);
+			var ret3 = NameCrypto.verify_name_symm(ret2, secret, timeout, app_code);
 			
 			result.innerHTML += '<p>' + ret3 + '</p>';
 		}

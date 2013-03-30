@@ -105,6 +105,41 @@ NameCryptoState.prototype.to_array = function() {
 	return n;
 };
 
+NameCryptoState.get_int = function(buffer) {
+	var n = (buffer[0] << 24) + (buffer[1] << 16) + (buffer[2] << 8) + buffer[3];
+	return n;
+};
+
+NameCryptoState.get_int_little_endian = function(buffer) {
+	var n = (buffer[3] << 24) + (buffer[2] << 16) + (buffer[1] << 8) + buffer[0];
+	return n;
+};
+
+NameCryptoState.prototype.from_array = function(buffer) {
+	var n1 = buffer.subarray(0, 4);
+	var n2 = buffer.subarray(4, 8);
+	var n3 = buffer.subarray(8, 12);
+	var n4 = buffer.subarray(12, 16);
+	
+	this.tv_sec = NameCryptoState.get_int(n1);
+	this.tv_usec = NameCryptoState.get_int(n2);
+	this.seq = NameCryptoState.get_int(n3);
+	this.rsvd = NameCryptoState.get_int(n4);
+};
+
+NameCryptoState.prototype.valid = function(timeout) {
+	var now = new Date();
+	var d = this.tv_sec * 1000 + this.tv_usec / 1000;
+	
+	if (d > now)
+		return false;
+	
+	if ((d + timeout) > now)
+		return true;
+	else
+		return false;
+}
+
 var NameCrypto = function NameCrypto() {
 	
 };
@@ -229,7 +264,7 @@ NameCrypto.authenticate_name_symm = function(state, name, app_code, share_key) {
 	return name.add(n);
 };
 
-NameCrypto.verify_name_symm = function(name, secret, app_code) {
+NameCrypto.verify_name_symm = function(name, secret, timeout, app_code) {
 	var n_crypto = name.components[name.components.length - 1];
 	
 	var app_len = (n_crypto[NameCrypto.AUTH_MAGIC_LEN] << 8) + n_crypto[NameCrypto.AUTH_MAGIC_LEN + 1];
@@ -238,6 +273,12 @@ NameCrypto.verify_name_symm = function(name, secret, app_code) {
 	
 	var n_state = n_crypto.subarray(NameCrypto.AUTH_MAGIC_LEN + 2 + app_len, 
 		NameCrypto.AUTH_MAGIC_LEN + 2 + app_len + NameCryptoState.size);
+	var state = new NameCryptoState();
+	state.from_array(n_state);
+	
+	var ret = state.valid(timeout);
+	if (!ret)
+		return false;
 	
 	var n_mac = n_crypto.subarray(NameCrypto.AUTH_MAGIC_LEN + 2 + app_len + NameCryptoState.size);
 	
@@ -264,7 +305,7 @@ NameCrypto.verify_name_symm = function(name, secret, app_code) {
 	if (mac.length != n_mac.length)
 		return false;
 	
-	var ret = true;
+	ret = true;
 	for (var i = 0; i < mac.length; i++) {
 		if (mac[i] != n_mac[i]) {
 			ret = false;
