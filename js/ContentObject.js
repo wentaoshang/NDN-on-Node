@@ -285,14 +285,12 @@ SignedInfo.prototype.setFields = function(){
 	
 	//this.locator = new KeyLocator(  DataUtils.toNumbersFromString(stringCertificate)  ,KeyLocatorType.CERTIFICATE );
 	
-	var publicKeyHex = globalKeyManager.publicKey;
+	var publicKeyHex = b64tohex(globalKeyManager.certificate).toLowerCase();
 
 	if(LOG>4)console.log('PUBLIC KEY TO WRITE TO CONTENT OBJECT IS ');
 	if(LOG>4)console.log(publicKeyHex);
 	
-	var publicKeyBytes = DataUtils.toNumbers(globalKeyManager.publicKey) ; 
-
-	
+	var publicKeyBytes = DataUtils.toNumbers(publicKeyHex);
 
 	//var stringCertificate = DataUtils.base64toString(globalKeyManager.certificate);
 	
