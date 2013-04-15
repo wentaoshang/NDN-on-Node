@@ -131,6 +131,9 @@ NameCryptoState.prototype.valid = function(timeout) {
 	var now = new Date();
 	var d = this.tv_sec * 1000 + this.tv_usec / 1000;
 	
+	if (timeout < 0)
+		return true;
+	
 	if (d > now)
 		return false;
 	
@@ -212,14 +215,12 @@ NameCrypto.verify_name_asymm = function(name) {
 NameCrypto.generate_symmetric_key = function(secret, app_code) {
 	var h_app = DataUtils.stringToHex(app_code);
 	var n_app = DataUtils.toNumbersFromString(app_code);
-	var h = hex_sha256_from_bytes(n_app);
-	//var app_id = h.substring(0, NameCrypto.APP_ID_LEN * 2);
-	var app_id = h;
+	var app_id = hex_sha256_from_bytes(n_app);
 	
 	var h_key = rstr2hex(
 		rstr_hmac_sha256(
 			str2rstr_utf8(secret), 
-			DataUtils.hexToRawString(app_id + h_app)
+			DataUtils.hexToRawString(app_id)
 		)
 	);
 	
