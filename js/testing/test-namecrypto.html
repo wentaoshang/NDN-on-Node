@@ -32,7 +32,6 @@
 			rsa.readPrivateKeyFromPEMString(globalKeyManager.privateKey);
 			
 			var state = new NameCryptoState();
-			state.seq = 1;
 			
 			var ret = NameCrypto.authenticate_name_asymm(state, name, app_code, rsa);
 			
