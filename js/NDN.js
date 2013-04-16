@@ -102,11 +102,11 @@ NDN.getEntryForExpressedInterest = function(/*Name*/ name) {
 NDN.CSTable = new Array();
 
 var CSEntry = function CSEntry(name, closure) {
-	this.name = name;        // String
+	this.name = name;        // Name
 	this.closure = closure;  // Closure
 };
 
-function getEntryForRegisteredPrefix(name) {
+function getEntryForRegisteredPrefix(/* Name */ name) {
 	for (var i = 0; i < NDN.CSTable.length; i++) {
 		if (NDN.CSTable[i].name.match(name) != null)
 			return NDN.CSTable[i];
@@ -172,7 +172,7 @@ NDN.prototype.registerPrefix = function(name, closure, flag) {
 	interest.scope = 1;
 	if (LOG > 3) console.log('Send Interest registration packet.');
     	
-    var csEntry = new CSEntry(name.getName(), closure);
+    var csEntry = new CSEntry(name, closure);
 	NDN.CSTable.push(csEntry);
     
     this.transport.send(encodeToBinaryInterest(interest));
@@ -194,10 +194,10 @@ NDN.prototype.onReceivedElement = function(element) {
 		var interest = new Interest();
 		interest.from_ccnb(decoder);
 		if (LOG > 3) console.log(interest);
-		var nameStr = escape(interest.name.getName());
-		if (LOG > 3) console.log(nameStr);
+		var name = interest.name;
+		if (LOG > 3) console.log(name);
 				
-		var entry = getEntryForRegisteredPrefix(nameStr);
+		var entry = getEntryForRegisteredPrefix(name);
 		if (entry != null) {
 			//console.log(entry);
 			var info = new UpcallInfo(this, interest, 0, null);
