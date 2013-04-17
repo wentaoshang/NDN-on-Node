@@ -87,35 +87,39 @@ WebSocketTransport.prototype.send = function(data) {
 WebSocketTransport.prototype.expressInterest = function(ndn, interest, closure) {
     if (ndn.readyStatus != NDN.OPENED) {
 		console.log('Connection is not established.');
-        return;
-    }
-    
+		return;
+	}
+
 	//TODO: check local content store first
 	if (closure != null) {
 		var pitEntry = new PITEntry(interest, closure);
-        // TODO: This needs to be a single thread-safe transaction on a global object.
 		NDN.PITTable.push(pitEntry);
 		closure.pitEntry = pitEntry;
 	}
 
 	// Set interest timer
 	if (closure != null) {
-		pitEntry.timerID = setTimeout(function() {
-			if (LOG > 3) console.log("Interest time out.");
-				
-			// Remove PIT entry from NDN.PITTable.
-            // TODO: Make this a thread-safe operation on the global PITTable.
-			var index = NDN.PITTable.indexOf(pitEntry);
-			//console.log(NDN.PITTable);
-			if (index >= 0) 
-	            NDN.PITTable.splice(index, 1);
-			//console.log(NDN.PITTable);
-			//console.log(pitEntry.interest.name.getName());
-				
-			// Raise closure callback
-			closure.upcall(Closure.UPCALL_INTEREST_TIMED_OUT, new UpcallInfo(ndn, interest, 0, null));
-		}, interest.interestLifetime);  // interestLifetime is in milliseconds.
-		//console.log(closure.timerID);
+		if (interest.interestLifetime == null)
+			// Use default timeout value
+			interest.interestLifetime = 4000;
+		
+		if (interest.interestLifetime > 0) {
+			pitEntry.timerID = setTimeout(function() {
+				if (LOG > 3) console.log("Interest time out.");
+					
+				// Remove PIT entry from NDN.PITTable.
+				var index = NDN.PITTable.indexOf(pitEntry);
+				//console.log(NDN.PITTable);
+				if (index >= 0)
+					NDN.PITTable.splice(index, 1);
+				//console.log(NDN.PITTable);
+				//console.log(pitEntry.interest.name.getName());
+					
+				// Raise closure callback
+				closure.upcall(Closure.UPCALL_INTEREST_TIMED_OUT, new UpcallInfo(ndn, interest, 0, null));
+			}, interest.interestLifetime);  // interestLifetime is in milliseconds.
+			//console.log(closure.timerID);
+		}
 	}
 
 	this.send(encodeToBinaryInterest(interest));
