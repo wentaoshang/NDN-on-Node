@@ -10,8 +10,8 @@
 	<script type="text/javascript" src="../tools/build/ndn-js.js"></script>
 
 	<script type="text/javascript">
-		//hostip = "131.179.196.232";
-		hostip = "localhost";
+		var hostip = "131.179.196.232";
+		//var hostip = "localhost";
 		var ndncon = new NDN({port:9696,host:hostip});
 		//var ndncon = new NDN({port:9696,host:hostip,verify:false});
         ndncon.transport.connectWebSocket(ndncon);
@@ -167,37 +167,7 @@
 		};
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
         
-        /*
-        var AsyncGetClosure = function AsyncGetClosure(T0) {
-        	this.T0 = T0;  // Start time
-        	// Inherit from Closure.
-			Closure.call(this);
-		};
-		
-		AsyncGetClosure.prototype.upcall = function(kind, upcallInfo) {
-			//console.log("Closure.upcall() executed.");
-			if (kind == Closure.UPCALL_FINAL) {
-				// Do nothing.
-			} else if (kind == Closure.UPCALL_CONTENT) {
-				var T1 = new Date();
-				
-				var content = upcallInfo.contentObject;
-				nameStr = escape(content.name.getName());
-				document.getElementById('content').innerHTML += "<p>Time elapsed: " + (T1 - this.T0) + " ms</p>"; 
-				document.getElementById('content').innerHTML += "<p>Name string: " + nameStr + "</p>";
-				document.getElementById('content').innerHTML += "<p>Content buffer length: " + content.content.length + "</p>";
-				//console.log("In callback, nameStr: " + nameStr);
-				//console.log("In callback, content: ");
-				//console.log(content.content.length);
-				//document.getElementById('content').innerHTML += contentObjectToHtml(content);
-			} else if (kind == Closure.UPCALL_INTEREST_TIMED_OUT) {
-				console.log("Closure.upcall called with interest time out.");
-			}
-			return Closure.RESULT_OK;
-		};
-		*/
-		
-		function run() {
+        function run() {
 			document.getElementById('content').innerHTML += "<p>Started...</p>";
 			//ndn.expressInterest(new Name(document.getElementById('interest').value), new AsyncGetClosure( new Date() ));
 			var name = new Name(document.getElementById('interest').value);

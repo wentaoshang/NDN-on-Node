@@ -8,7 +8,7 @@
 
 var BinaryXMLStructureDecoder = function BinaryXMLDecoder() {
     this.gotElementEnd = false;
-	this.offset = 0;
+    this.offset = 0;
     this.level = 0;
     this.state = BinaryXMLStructureDecoder.READ_HEADER_OR_CLOSE;
     this.headerLength = 0;
@@ -27,10 +27,7 @@ BinaryXMLStructureDecoder.READ_BYTES = 1;
  * You have to pass in input each time because the array could be reallocated.
  * This throws an exception for badly formed ccnb.
  */
-BinaryXMLStructureDecoder.prototype.findElementEnd = function(
-    // Uint8Array
-    input)
-{
+BinaryXMLStructureDecoder.prototype.findElementEnd = function(input) {
     if (this.gotElementEnd)
         // Someone is calling when we already got the end.
         return true;

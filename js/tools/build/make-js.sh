@@ -1,14 +1,16 @@
-#!/bin/sh
+#!/bin/bash
 
-rm ndn-js-uncomp.js
+if [ -e "ndn.js" ]
+then
+    rm ndn.js
+fi
 
 cat ../../Closure.js \
-  ../../WebSocketTransport.js \
+  ../../TcpTransport.js \
   ../../util/CCNProtocolDTags.js \
   ../../util/CCNTime.js \
   ../../Name.js \
   ../../ContentObject.js \
-  ../../encoding/DateFormat.js \
   ../../Interest.js \
   ../../Key.js \
   ../../PublisherID.js \
@@ -19,21 +21,7 @@ cat ../../Closure.js \
   ../../encoding/BinaryXMLEncoder.js \
   ../../encoding/BinaryXMLDecoder.js \
   ../../encoding/BinaryXMLStructureDecoder.js \
-  ../../encoding/DataUtils.js \
   ../../encoding/EncodingUtils.js \
   ../../security/KeyManager.js \
-  ../../security/Witness.js \
-  ../../securityLib/sha256.js \
-  ../../securityLib/base64.js \
-  ../../securityLib/rsa.js \
-  ../../securityLib/rsa2.js \
-  ../../securityLib/rsapem-1.1.js \
-  ../../securityLib/rsasign-1.2.js \
-  ../../securityLib/asn1hex-1.1.js \
-  ../../securityLib/x509-1.1.js \
-  ../../securityLib/jsbn.js \
-  ../../securityLib/jsbn2.js \
   ../../NDN.js \
-  > ndn-js-uncomp.js
-
-java -jar compiler/compiler.jar --js ndn-js-uncomp.js --js_output_file ndn-js.js
+  > ndn.js

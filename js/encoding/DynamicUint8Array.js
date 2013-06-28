@@ -11,7 +11,7 @@
  * To access the array, use this.array or call subarray.
  */
 var DynamicUint8Array = function DynamicUint8Array(length) {
-	if (!length)
+    if (!length)
         length = 16;
     
     this.array = new Uint8Array(length);
@@ -50,5 +50,5 @@ DynamicUint8Array.prototype.set = function(value, offset) {
  * Return this.array.subarray(begin, end);
  */
 DynamicUint8Array.prototype.subarray = function(begin, end) {
-    return this.array.subarray(begin, end);
+    return this.array.slice(begin, end);
 }

@@ -3,6 +3,10 @@
  * See COPYING for copyright and distribution information.
  * This class represents a Name as an array of components where each is a byte array.
  */
+
+/**
+ * Ported to node.js by Wentao Shang
+ */
  
 /*
  * Create a new Name from _components.
@@ -11,25 +15,27 @@
  * Convert and store as an array of Uint8Array.
  * If a component is a string, encode as utf8.
  */
-var Name = function Name(_components){
-	if( typeof _components == 'string') {		
-		if(LOG>3)console.log('Content Name String '+_components);
-		this.components = Name.createNameArray(_components);
-	}
-	else if(typeof _components === 'object'){		
-		this.components = [];
+var Name = function Name(_components) {
+    if( typeof _components == 'string') {		
+	if(LOG>3)console.log('Content Name String '+_components);
+	this.components = Name.createNameArray(_components);
+    }
+    else if(typeof _components === 'object'){		
+	this.components = [];
         if (_components instanceof Name)
             this.add(_components);
         else {
             for (var i = 0; i < _components.length; ++i)
                 this.add(_components[i]);
         }
-	}
-	else if(_components==null)
-		this.components =[];
-	else
-		if(LOG>1)console.log("NO CONTENT NAME GIVEN");
+    }
+    else if(_components==null)
+	this.components =[];
+    else
+	if(LOG>1)console.log("NO CONTENT NAME GIVEN");
 };
+
+exports.Name = Name;
 
 Name.prototype.getName = function() {
     return this.to_uri();
@@ -52,7 +58,7 @@ Name.createNameArray = function(name) {
             name = name.substr(iColon + 1, name.length - iColon - 1).trim();
     }
     
-  	if (name[0] == '/') {
+    if (name[0] == '/') {
         if (name.length >= 2 && name[1] == '/') {
             // Strip the authority following "//".
             var iAfterAuthority = name.indexOf('/', 2);
@@ -66,7 +72,7 @@ Name.createNameArray = function(name) {
             name = name.substr(1, name.length - 1).trim();
     }
 
-	var array = name.split('/');
+    var array = name.split('/');
     
     // Unescape the components.
     for (var i = 0; i < array.length; ++i) {
@@ -90,60 +96,53 @@ Name.createNameArray = function(name) {
             array[i] = component;
         
         // Change the component to Uint8Array now.
-        array[i] = DataUtils.toNumbersFromString(array[i]);
+        array[i] = new Buffer(array[i]);
     }
 
-	return array;
+    return array;
 }
 
 
-Name.prototype.from_ccnb = function(/*XMLDecoder*/ decoder)  {
-		decoder.readStartElement(this.getElementLabel());
-
+Name.prototype.from_ccnb = function(/*XMLDecoder*/ decoder) {
+    decoder.readStartElement(this.getElementLabel());
 		
-		this.components = new Array(); //new ArrayList<byte []>();
+    this.components = new Array(); //new ArrayList<byte []>();
 
-		while (decoder.peekStartElement(CCNProtocolDTags.Component)) {
-			this.add(decoder.readBinaryElement(CCNProtocolDTags.Component));
-		}
+    while (decoder.peekStartElement(CCNProtocolDTags.Component)) {
+	this.add(decoder.readBinaryElement(CCNProtocolDTags.Component));
+    }
 		
-		decoder.readEndElement();
+    decoder.readEndElement();
 };
 
-Name.prototype.to_ccnb = function(/*XMLEncoder*/ encoder)  {
-		
-		if( this.components ==null ) 
-			throw new Error("CANNOT ENCODE EMPTY CONTENT NAME");
+Name.prototype.to_ccnb = function(/*XMLEncoder*/ encoder) {
+    if( this.components ==null ) 
+	throw new Error("CANNOT ENCODE EMPTY CONTENT NAME");
 
-		encoder.writeStartElement(this.getElementLabel());
-		var count = this.components.length;
-		for (var i=0; i < count; i++) {
-			encoder.writeElement(CCNProtocolDTags.Component, this.components[i]);
-		}
-		encoder.writeEndElement();
+    encoder.writeStartElement(this.getElementLabel());
+    var count = this.components.length;
+    for (var i = 0; i < count; i++) {
+	encoder.writeElement(CCNProtocolDTags.Component, this.components[i]);
+    }
+    encoder.writeEndElement();
 };
 
 Name.prototype.getElementLabel = function(){
-	return CCNProtocolDTags.Name;
+    return CCNProtocolDTags.Name;
 };
 
 /*
- * component is a string, byte array, ArrayBuffer, Uint8Array or Name.
- * Convert to Uint8Array and add to this Name.
+ * component is a string, Array, Buffer or Name.
+ * Convert to Buffer and add to this Name.
  * If a component is a string, encode as utf8.
  * Return this Name object to allow chaining calls to add.
  */
 Name.prototype.add = function(component){
     var result;
     if(typeof component == 'string')
-        result = DataUtils.stringToUtf8Array(component);
-	else if(typeof component == 'object' && component instanceof Uint8Array)
-        result = new Uint8Array(component);
-	else if(typeof component == 'object' && component instanceof ArrayBuffer) {
-        // Make a copy.  Don't use ArrayBuffer.slice since it isn't always supported.
-        result = new Uint8Array(new ArrayBuffer(component.byteLength));
-        result.set(new Uint8Array(component));
-    }
+        result = new Buffer(component);
+    else if(typeof component == 'object' && component instanceof Buffer)
+        result = component;
     else if (typeof component == 'object' && component instanceof Name) {
         var components;
         if (component == this)
@@ -156,16 +155,16 @@ Name.prototype.add = function(component){
             this.components.push(new Uint8Array(components[i]));
         return this;
     }
-	else if(typeof component == 'object')
+    else if(typeof component == 'object')
         // Assume component is a byte array.  We can't check instanceof Array because
         //   this doesn't work in JavaScript if the array comes from a different module.
-        result = new Uint8Array(component);
-	else 
-		throw new Error("Cannot add Name element at index " + this.components.length + 
-            ": Invalid type");
+        result = new Buffer(component);
+    else 
+	throw new Error("Cannot add Name element at index " + this.components.length + 
+			": Invalid type");
     
     this.components.push(result);
-	return this;
+    return this;
 };
 
 // Return the escaped name string according to "CCNx URI Scheme".
@@ -173,12 +172,12 @@ Name.prototype.to_uri = function() {
     if (this.components.length == 0)
         return "/";
     
-	var result = "";
+    var result = "";
 	
-	for(var i = 0; i < this.components.length; ++i)
-		result += "/"+ Name.toEscapedString(this.components[i]);
-	
-	return result;	
+    for(var i = 0; i < this.components.length; ++i)
+	result += "/"+ Name.toEscapedString(this.components[i]);
+    
+    return result;	
 };
 
 /*
@@ -189,11 +188,11 @@ Name.prototype.getPrefix = function(nComponents) {
 }
 
 /*
- * Return a new ArrayBuffer of the component at i.
+ * Return a new Buffer of the component at i.
  */
 Name.prototype.getComponent = function(i) {
-    var result = new ArrayBuffer(this.components[i].length);
-    new Uint8Array(result).set(this.components[i]);
+    var result = new Buffer(this.components[i].length);
+    this.components[i].copy(result);
     return result;
 }
 
@@ -218,6 +217,23 @@ Name.prototype.indexOfFileName = function() {
     return -1;
 }
 
+
+/**
+ * Return true if a1 and a2 are the same length with equal elements.
+ */
+var arraysEqual = function(a1, a2){
+    if (a1.length != a2.length)
+        return false;
+    
+    for (var i = 0; i < a1.length; ++i) {
+        if (a1[i] != a2[i])
+            return false;
+    }
+
+    return true;
+};
+
+
 /*
  * Return true if this Name has the same components as name.
  */
@@ -227,7 +243,7 @@ Name.prototype.equalsName = function(name) {
     
     // Start from the last component because they are more likely to differ.
     for (var i = this.components.length - 1; i >= 0; --i) {
-        if (!DataUtils.arraysEqual(this.components[i], name.components[i]))
+        if (!arraysEqual(this.components[i], name.components[i]))
             return false;
     }
     
@@ -268,8 +284,8 @@ Name.getComponentContentDigestValue = function(component) {
 }
 
 // Meta GUID "%C1.M.G%C1" + ContentDigest with a 32 byte BLOB. 
-Name.ContentDigestPrefix = new Uint8Array([0xc1, 0x2e, 0x4d, 0x2e, 0x47, 0xc1, 0x01, 0xaa, 0x02, 0x85]);
-Name.ContentDigestSuffix = new Uint8Array([0x00]);
+Name.ContentDigestPrefix = new Buffer([0xc1, 0x2e, 0x4d, 0x2e, 0x47, 0xc1, 0x01, 0xaa, 0x02, 0x85]);
+Name.ContentDigestSuffix = new Buffer([0x00]);
 
 /**
  * Return component as an escaped string according to "CCNx URI Scheme".
@@ -306,18 +322,18 @@ Name.toEscapedString = function(component) {
 };
 
 Name.prototype.match = function(/*Name*/ name) {
-	var i_name = this.components;
-	var o_name = name.components;
+    var i_name = this.components;
+    var o_name = name.components;
 
-	// The intrest name is longer than the name we are checking it against.
-	if (i_name.length > o_name.length)
-            return false;
+    // The intrest name is longer than the name we are checking it against.
+    if (i_name.length > o_name.length)
+	return false;
 
-	// Check if at least one of given components doesn't match.
+    // Check if at least one of given components doesn't match.
     for (var i = 0; i < i_name.length; ++i) {
-        if (!DataUtils.arraysEqual(i_name[i], o_name[i]))
+        if (!arraysEqual(i_name[i], o_name[i]))
             return false;
     }
 
-	return true;
+    return true;
 };
