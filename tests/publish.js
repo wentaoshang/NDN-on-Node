@@ -1,9 +1,9 @@
-var NDN = require('../tools/build/ndn.js').NDN;
-var Name = require('../tools/build/ndn.js').Name;
-var Interest = require('../tools/build/ndn.js').Interest;
-var ContentObject = require('../tools/build/ndn.js').ContentObject;
-var Closure = require('../tools/build/ndn.js').Closure;
-var Key = require('../tools/build/ndn.js').Key;
+var NDN = require('../build/ndn.js').NDN;
+var Name = require('../build/ndn.js').Name;
+var Interest = require('../build/ndn.js').Interest;
+var ContentObject = require('../build/ndn.js').ContentObject;
+var Closure = require('../build/ndn.js').Closure;
+var Key = require('../build/ndn.js').Key;
 
 var key = new Key();
 key.fromPemFile('./test.pem');

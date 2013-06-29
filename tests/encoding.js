@@ -1,11 +1,11 @@
-var Encoder = require('../tools/build/ndn.js').CcnbEncoder;
-var Decoder = require('../tools/build/ndn.js').CcnbDecoder;
-var Name = require('../tools/build/ndn.js').Name;
-var Interest = require('../tools/build/ndn.js').Interest;
-var ContentObject = require('../tools/build/ndn.js').ContentObject;
-var Key = require('../tools/build/ndn.js').Key;
-var SignedInfo = require('../tools/build/ndn.js').SignedInfo;
-var Signature = require('../tools/build/ndn.js').Signature;
+var Encoder = require('../build/ndn.js').CcnbEncoder;
+var Decoder = require('../build/ndn.js').CcnbDecoder;
+var Name = require('../build/ndn.js').Name;
+var Interest = require('../build/ndn.js').Interest;
+var ContentObject = require('../build/ndn.js').ContentObject;
+var Key = require('../build/ndn.js').Key;
+var SignedInfo = require('../build/ndn.js').SignedInfo;
+var Signature = require('../build/ndn.js').Signature;
 
 var n = new Name('/a/b/c.txt');
 
