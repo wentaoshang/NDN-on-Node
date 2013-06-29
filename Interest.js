@@ -118,6 +118,17 @@ Interest.prototype.to_ccnb = function (/*XMLEncoder*/ encoder) {
     encoder.writeEndElement();
 };
 
+
+/*
+ * Return encoded Buffer containing the ccnd-formated interest packet
+ */
+Interest.prototype.encodeToBinary = function () {
+    var enc = new BinaryXMLEncoder();
+    this.to_ccnb(enc);
+    return enc.getReducedOstream();
+};
+
+
 /*
  * Return true if this.name.match(name) and the name conforms to the interest selectors.
  */

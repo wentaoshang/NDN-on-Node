@@ -16,29 +16,57 @@
  * If a component is a string, encode as utf8.
  */
 var Name = function Name(_components) {
-    if( typeof _components == 'string') {		
+    if (_components == null)
+	this.components = [];
+    else if (typeof _components == 'string') {
 	this.components = Name.createNameArray(_components);
-    }
-    else if(typeof _components == 'object'){		
+    } else if (typeof _components == 'object') {
 	this.components = [];
         if (_components instanceof Name)
             this.add(_components);
         else {
-            for (var i = 0; i < _components.length; ++i)
+            for (var i = 0; i < _components.length; i++)
                 this.add(_components[i]);
         }
     }
-    else if (_components == null)
-	this.components = [];
-    else
-	if (LOG > 1) console.log("NO CONTENT NAME GIVEN");
 };
 
 exports.Name = Name;
 
+/*
+ * component is a string, Array, Buffer or Name.
+ * Convert to Buffer and add to this Name.
+ * If a component is a string, encode as utf8.
+ * Return this Name object to allow chaining calls to add.
+ */
+Name.prototype.add = function(component){
+    var result;
+    if(typeof component == 'string')
+        result = new Buffer(component, 'ascii');
+    else if(typeof component == 'object' && component instanceof Buffer)
+        result = component;
+    else if (typeof component == 'object' && component instanceof Name) {
+        var components;
+        if (component == this)
+            // special case, when we need to create a copy
+            components = this.components.slice(0, this.components.length);
+        else
+            components = component.components;
+        
+        for (var i = 0; i < components.length; ++i)
+            this.components.push(new Buffer(components[i]));
+
+        return this;
+    } else 
+	throw new Error("Cannot add Name element at index " + this.components.length + ": Invalid type");
+    
+    this.components.push(result);
+    return this;
+};
+
 
 /*
- * Parse name as a URI and return an array of Uint8Array components.
+ * Parse name as a URI string and return an array of Buffer components.
  */
 Name.createNameArray = function(name) {
     name = name.trim();
@@ -125,42 +153,6 @@ Name.prototype.to_ccnb = function(/*XMLEncoder*/ encoder) {
 
 Name.prototype.getElementLabel = function(){
     return CCNProtocolDTags.Name;
-};
-
-/*
- * component is a string, Array, Buffer or Name.
- * Convert to Buffer and add to this Name.
- * If a component is a string, encode as utf8.
- * Return this Name object to allow chaining calls to add.
- */
-Name.prototype.add = function(component){
-    var result;
-    if(typeof component == 'string')
-        result = new Buffer(component);
-    else if(typeof component == 'object' && component instanceof Buffer)
-        result = component;
-    else if (typeof component == 'object' && component instanceof Name) {
-        var components;
-        if (component == this)
-            // special case, when we need to create a copy
-            components = this.components.slice(0, this.components.length);
-        else
-            components = component.components;
-        
-        for (var i = 0; i < components.length; ++i)
-            this.components.push(new Uint8Array(components[i]));
-        return this;
-    }
-    else if(typeof component == 'object')
-        // Assume component is a byte array.  We can't check instanceof Array because
-        //   this doesn't work in JavaScript if the array comes from a different module.
-        result = new Buffer(component);
-    else 
-	throw new Error("Cannot add Name element at index " + this.components.length + 
-			": Invalid type");
-    
-    this.components.push(result);
-    return this;
 };
 
 // Return the escaped name string according to "CCNx URI Scheme".

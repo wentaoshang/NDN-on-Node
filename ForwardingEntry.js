@@ -11,7 +11,7 @@
 var ForwardingEntry = function ForwardingEntry(_action, _prefixName, _ccndId, _faceID, _flags, _lifetime) {
     //String
     this.action = _action;
-    //Name\
+    //Name
     this.prefixName = _prefixName;
     //PublisherPublicKeyDigest 
     this.ccndID = _ccndId;
@@ -52,9 +52,6 @@ ForwardingEntry.prototype.from_ccnb = function (/*XMLDecoder*/ decoder) {
  * Used by NetworkObject to encode the object to a network stream.
  */
 ForwardingEntry.prototype.to_ccnb =function(/*XMLEncoder*/ encoder) {
-    //if (!validate()) {
-    //throw new ContentEncodingException("Cannot encode " + this.getClass().getName() + ": field values missing.");
-    //}
     encoder.writeStartElement(this.getElementLabel());
     if (null != this.action && this.action.length != 0)
 	encoder.writeElement(CCNProtocolDTags.Action, this.action);	
@@ -74,6 +71,12 @@ ForwardingEntry.prototype.to_ccnb =function(/*XMLEncoder*/ encoder) {
 	encoder.writeElement(CCNProtocolDTags.FreshnessSeconds, this.lifetime);
     }
     encoder.writeEndElement();   			
+};
+
+ForwardingEntry.prototype.encodeToBinary = function () {
+    var enc = new BinaryXMLEncoder();
+    this.to_ccnb(enc);
+    return enc.getReducedOstream();
 };
 
 ForwardingEntry.prototype.getElementLabel = function() { return CCNProtocolDTags.ForwardingEntry; };

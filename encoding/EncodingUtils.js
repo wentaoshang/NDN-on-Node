@@ -16,7 +16,7 @@ function encodeToBinaryContentObject(co) {
     return enc.getReducedOstream();
 }
 
-function encodeForwardingEntry(co) {
+function encodeToBinaryForwardingEntry(co) {
     var enc = new BinaryXMLEncoder();
     co.to_ccnb(enc);
     return enc.getReducedOstream();	

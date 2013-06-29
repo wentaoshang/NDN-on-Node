@@ -16,12 +16,10 @@ cat ../../Closure.js \
   ../../Key.js \
   ../../PublisherID.js \
   ../../PublisherPublicKeyDigest.js \
-  ../../FaceInstance.js \
   ../../ForwardingEntry.js \
   ../../encoding/DynamicUint8Array.js \
   ../../encoding/BinaryXMLEncoder.js \
   ../../encoding/BinaryXMLDecoder.js \
   ../../encoding/BinaryXMLStructureDecoder.js \
-  ../../encoding/EncodingUtils.js \
   ../../NDN.js \
   > ndn.js

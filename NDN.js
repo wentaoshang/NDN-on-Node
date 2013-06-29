@@ -13,8 +13,6 @@ var LOG = 4;
 /**
  * settings is an associative array with the following defaults:
  * {
- *   host: 'localhost', // If null, use getHostAndPort when connecting.
- *   port: 9696,
  *   verify: true
  *   onopen: function() { if (LOG > 3) console.log("NDN connection established."); }
  *   onclose: function() { if (LOG > 3) console.log("NDN connection closed."); }
@@ -30,7 +28,9 @@ var NDN = function NDN(settings) {
     // Event handler
     this.onopen = (settings.onopen || function() { if (LOG > 3) console.log("NDN connection established."); });
     this.onclose = (settings.onclose || function() { if (LOG > 3) console.log("NDN connection closed."); });
+
     this.ccndid = null;
+    this.default_key = null;  // Should generate a default key or fetch from default key file upon object construction
 };
 
 exports.NDN = NDN;
@@ -137,8 +137,9 @@ NDN.prototype.expressInterest = function(/*Name*/ name, /*Closure*/ closure, /*I
 	if (interest.interestLifetime == null)
 	    // Use default timeout value
 	    interest.interestLifetime = 4000;
-		
+	
 	if (interest.interestLifetime > 0) {
+	    var self = this;
 	    pitEntry.timerID = setTimeout(function() {
 		    if (LOG > 3) console.log("Interest time out.");
 					
@@ -151,44 +152,53 @@ NDN.prototype.expressInterest = function(/*Name*/ name, /*Closure*/ closure, /*I
 		    //console.log(pitEntry.interest.name.to_uri());
 					
 		    // Raise closure callback
-		    closure.upcall(Closure.UPCALL_INTEREST_TIMED_OUT, new UpcallInfo(ndn, interest, 0, null));
+		    closure.upcall(Closure.UPCALL_INTEREST_TIMED_OUT, new UpcallInfo(self, interest, 0, null));
 		}, interest.interestLifetime);  // interestLifetime is in milliseconds.
 	    //console.log(closure.timerID);
 	}
     }
 
-    this.transport.send(encodeToBinaryInterest(interest));
+    this.transport.send(interest.encodeToBinary());
 };
 
-NDN.prototype.setInterestFilter = function(name, closure, flag) {
+
+NDN.prototype.registerPrefix = function(prefix, closure, flag) {
     if (this.readyStatus != NDN.OPENED) {
 	console.log('Connection is not established.');
+	return;
     }
 
     if (this.ccndid == null) {
 	console.log('ccnd node ID unkonwn. Cannot register prefix.');
+	return;
+    }
+
+    if (this.default_key == null) {
+	console.log('Cannot register prefix without default key');
+	return;
     }
     
-    var fe = new ForwardingEntry('selfreg', name, null, null, 3, 2147483647);
-    var bytes = encodeForwardingEntry(fe);
-    
-    var si = new SignedInfo();
-    	
-    var co = new ContentObject(new Name(), si, bytes, new Signature()); 
-    co.sign();
-    var coBinary = encodeToBinaryContentObject(co);
-    
-    var nodename = this.ccndid;
-    var interestName = new Name(['ccnx', nodename, 'selfreg', coBinary]);
+    var fe = new ForwardingEntry('selfreg', prefix, null, null, 3, 2147483647);
+    var bytes = fe.encodeToBinary();
 
+    var si = new SignedInfo();
+    si.setFields(this.default_key);
+
+    var co = new ContentObject(new Name(), si, bytes, new Signature()); 
+    co.sign(this.default_key);
+    var coBinary = co.encodeToBinary();
+
+    var interestName = new Name(['ccnx', this.ccndid, 'selfreg', coBinary]);
     var interest = new Interest(interestName);
     interest.scope = 1;
-    if (LOG > 3) console.log('Send Interest registration packet.');
     
-    var csEntry = new CSEntry(name, closure);
-    NDN.CSTable.push(csEntry);
-    
-    this.transport.send(encodeToBinaryInterest(interest));
+    var csEntry = new CSEntry(prefix, closure);
+    CSTable.push(csEntry);
+
+    var data = interest.encodeToBinary();
+    this.transport.send(data);
+
+    if (LOG > 3) console.log('Interest registration packet sent.');
 };
 
 /*
@@ -214,20 +224,20 @@ NDN.prototype.onReceivedElement = function(element) {
 	    var info = new UpcallInfo(this, interest, 0, null);
 	    var ret = entry.closure.upcall(Closure.UPCALL_INTEREST, info);
 	    if (ret == Closure.RESULT_INTEREST_CONSUMED && info.contentObject != null) 
-		this.transport.send(encodeToBinaryContentObject(info.contentObject));
+		this.transport.send(info.contentObject.encodeToBinary());
 	}				
     } else if (decoder.peekStartElement(CCNProtocolDTags.ContentObject)) {  // Content packet
 	if (LOG > 3) console.log('ContentObject packet received.');
-				
+	
 	var co = new ContentObject();
 	co.from_ccnb(decoder);
-				
+	
 	if (this.ccndid == null && NDN.ccndIdFetcher.match(co.name)) {
 	    // We are in starting phase, record publisherPublicKeyDigest in ccndid
 	    if(!co.signedInfo || !co.signedInfo.publisher 
 	       || !co.signedInfo.publisher.publisherPublicKeyDigest) {
 		console.log("Cannot contact router, close NDN now.");
-						
+		
 		// Close NDN if we fail to connect to a ccn router
 		this.readyStatus = NDN.CLOSED;
 		this.onclose();
@@ -235,7 +245,7 @@ NDN.prototype.onReceivedElement = function(element) {
 		if (LOG>3) console.log('Connected to local ccnd.');
 		this.ccndid = co.signedInfo.publisher.publisherPublicKeyDigest;
 		if (LOG>3) console.log('Local ccnd ID is ' + this.ccndid.toString('hex'));
-						
+		
 		// Call NDN.onopen after success
 		this.readyStatus = NDN.OPENED;
 		this.onopen();
@@ -256,6 +266,14 @@ NDN.prototype.onReceivedElement = function(element) {
 		//console.log("Clear interest timer");
 		//console.log(currentClosure.timerID);
 
+		// Pass content up without verifying the signature
+		currentClosure.upcall(Closure.UPCALL_CONTENT_UNVERIFIED, new UpcallInfo(this, null, 0, co));
+		return;
+
+		// Currently signature verification is broken.
+		// User should build their own trust management model to verify the data.
+
+/*
 		if (this.verify == false) {
 		    // Pass content up without verifying the signature
 		    currentClosure.upcall(Closure.UPCALL_CONTENT_UNVERIFIED, new UpcallInfo(this, null, 0, co));
@@ -265,10 +283,10 @@ NDN.prototype.onReceivedElement = function(element) {
 		// Key verification
 
 		// Recursive key fetching & verification closure
-		var KeyFetchClosure = function KeyFetchClosure(content, closure, key, sig) {
-		    this.contentObject = content;  // unverified content object
+		var KeyFetchClosure = function KeyFetchClosure(co, closure, keyname, sig) {
+		    this.contentObject = co;  // unverified content object
 		    this.closure = closure;  // closure corresponding to the contentObject
-		    this.keyName = key;  // name of current key to be fetched
+		    this.keyName = keyname;  // name of current key to be fetched
 		    this.sig = sig;  // signature buffer to be verified
 
 		    Closure.call(this);
@@ -281,13 +299,13 @@ NDN.prototype.onReceivedElement = function(element) {
 			console.log(this.keyName.contentName.getName());
 		    } else if (kind == Closure.UPCALL_CONTENT) {
 			//console.log("In KeyFetchClosure.upcall: signature verification passed");
-			var keyPem = "-----BEGIN CERTIFICATE-----\n" + this.contentObject.signedInfo.locator.publicKey.toString('base64') + "\n-----END CERTIFICATE-----";
+			var keyPem = "-----BEGIN CERTIFICATE-----\n" + upcallInfo.contentObject.content.toString('base64') + "\n-----END CERTIFICATE-----";
 			var verifier = require('crypto').createVerify('RSA-SHA256');
 			verifier.update(this.contentObject.rawSignatureData);
 			var verified = verifier.verify(keyPem, this.sig);
 		        
 			var flag = (verified == true) ? Closure.UPCALL_CONTENT : Closure.UPCALL_CONTENT_BAD;
-			//console.log("raise encapsulated closure");
+			
 			this.closure.upcall(flag, new UpcallInfo(thisNdn, null, 0, this.contentObject));
 		    } else if (kind == Closure.UPCALL_CONTENT_BAD) {
 			console.log("In KeyFetchClosure.upcall: signature verification failed");
@@ -314,8 +332,9 @@ NDN.prototype.onReceivedElement = function(element) {
 
 			if (keylocator.keyName.contentName.match(co.name)) {
 			    if (LOG > 3) console.log("Content is key itself");
-									
-			    var keyPem = "-----BEGIN CERTIFICATE-----\n" + co.signedInfo.locator.publicKey.toString('base64') + "\n-----END CERTIFICATE-----";
+			    
+			    var keyDER = co.signedInfo.locator.publicKey.toString('base64');
+			    var keyPem = "-----BEGIN CERTIFICATE-----\n" + keyDER + "\n-----END CERTIFICATE-----";
 			    var verifier = require('crypto').createVerify('RSA-SHA256');
 			    verifier.update(co.rawSignatureData);
 			    var verified = verifier.verify(keyPem, sig);
@@ -326,7 +345,7 @@ NDN.prototype.onReceivedElement = function(element) {
 			} else {
 			    // Fetch key now
 			    if (LOG > 3) console.log("Fetch key according to keylocator");
-			    var nextClosure = new KeyFetchClosure(co, currentClosure, keylocator.keyName, sigHex, wit);
+			    var nextClosure = new KeyFetchClosure(co, currentClosure, keylocator.keyName, sig);
 			    this.expressInterest(keylocator.keyName.contentName.getPrefix(4), nextClosure);
 			}
 		    } else if (keylocator.type == KeyLocatorType.KEY) {
@@ -348,6 +367,7 @@ NDN.prototype.onReceivedElement = function(element) {
 			// TODO: verify certificate
 		    }
 		}
+*/
 	    }
 	}
     }
@@ -393,4 +413,4 @@ BinaryXmlElementReader.prototype.onReceivedData = function(/* Buffer */ rawData)
             return;
         }
     }
-}
+};

@@ -127,7 +127,13 @@ ContentObject.prototype.to_ccnb = function (encoder) {
     this.saveRawData(encoder.ostream);	
 };
 
-ContentObject.prototype.getElementLabel = function() { return CCNProtocolDTags.ContentObject; };
+ContentObject.prototype.encodeToBinary = function () {
+    var enc = new BinaryXMLEncoder();
+    this.to_ccnb(enc);
+    return enc.getReducedOstream();
+};
+
+ContentObject.prototype.getElementLabel = function () { return CCNProtocolDTags.ContentObject; };
 
 /**
  * Signature
@@ -225,8 +231,8 @@ SignedInfo.prototype.setFields = function (/* Key */ key) {
     
     if(LOG>4)console.log('TIME msec is');
     if(LOG>4)console.log(this.timestamp.msec);
-
-    this.type = 0;//0x0C04C0;//ContentTypeValue[ContentType.DATA];
+    
+    this.type = ContentType.DATA;  // default
 
     this.locator = new KeyLocator(publicKeyBytes, KeyLocatorType.KEY);
 };
@@ -250,7 +256,7 @@ SignedInfo.prototype.from_ccnb = function (decoder) {
 
 	//TODO Implement type of Key Reading
 
-	if(LOG>4)console.log('Binary Type of of Signed Info is '+binType);
+	if(LOG>4)console.log('Binary Type of of Signed Info is '+ binType);
 
 	this.type = binType;			
 			
@@ -263,7 +269,7 @@ SignedInfo.prototype.from_ccnb = function (decoder) {
     } else {
 	this.type = ContentType.DATA; // default
     }
-		
+    
     if (decoder.peekStartElement(CCNProtocolDTags.FreshnessSeconds)) {
 	this.freshnessSeconds = decoder.readIntegerElement(CCNProtocolDTags.FreshnessSeconds);
 	if(LOG>4)console.log('FRESHNESS IN SECONDS IS '+ this.freshnessSeconds);
@@ -287,22 +293,23 @@ SignedInfo.prototype.to_ccnb = function (encoder) {
     if (!this.validate()) {
 	throw new Error("Cannot encode : field values missing.");
     }
+    
     encoder.writeStartElement(this.getElementLabel());
-		
+    	
     if (null != this.publisher) {
 	if(LOG>4) console.log('ENCODING PUBLISHER KEY' + this.publisher.publisherPublicKeyDigest.toString('hex'));
 
 	this.publisher.to_ccnb(encoder);
     }
-
+    
     if (null != this.timestamp) {
 	encoder.writeDateTime(CCNProtocolDTags.Timestamp, this.timestamp );
     }
-		
-    if (null != this.type && this.type !=0) {
+    	
+    if (null != this.type && this.type != ContentType.DATA) {
 	encoder.writeElement(CCNProtocolDTags.type, this.type);
     }
-		
+    
     if (null != this.freshnessSeconds) {
 	encoder.writeElement(CCNProtocolDTags.FreshnessSeconds, this.freshnessSeconds);
     }
@@ -317,23 +324,18 @@ SignedInfo.prototype.to_ccnb = function (encoder) {
 
     encoder.writeEndElement();   		
 };
-	
-SignedInfo.prototype.valueToType = function () {
-    //for (Entry<byte [], ContentType> entry : ContentValueTypes.entrySet()) {
-    //if (Arrays.equals(value, entry.getKey()))
-    //return entry.getValue();
-    //}
-    return null;	
-};
+
 
 SignedInfo.prototype.getElementLabel = function () { 
     return CCNProtocolDTags.SignedInfo;
 };
 
+
 SignedInfo.prototype.validate = function () {
     // We don't do partial matches any more, even though encoder/decoder
     // is still pretty generous.
-    if (null ==this.publisher || null==this.timestamp ||null== this.locator)
+    if (null == this.publisher || null == this.timestamp || null == this.locator)
 	return false;
-    return true;
+    else
+	return true;
 };

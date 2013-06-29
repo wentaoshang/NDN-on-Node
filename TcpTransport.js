@@ -22,7 +22,6 @@ TcpTransport.prototype.connect = function() {
 
     this.socket.on('data', function(data) {			
 	    if (typeof data == 'object') {
-		console.log("data");
 		// Make a copy of data (maybe a Buffer or a String)
 		var buf = new Buffer(data);
 		// Find the end of the binary XML element and call ndn.onReceivedElement.
@@ -38,7 +37,7 @@ TcpTransport.prototype.connect = function() {
 	    // Fetch ccndid now
 	    var interest = new Interest(NDN.ccndIdFetcher);
 	    interest.interestLifetime = 4000; // milliseconds
-	    self.send(encodeToBinaryInterest(interest));
+	    self.send(interest.encodeToBinary());
 	});
     
     this.socket.on('error', function() {
@@ -63,7 +62,6 @@ TcpTransport.prototype.connect = function() {
  */
 TcpTransport.prototype.send = function(/*Buffer*/ data) {
     if (this.sock_ready) {
-	console.log(data.toString('hex'));
         this.socket.write(data);
     } else
 	console.log('TCP connection is not established.');
