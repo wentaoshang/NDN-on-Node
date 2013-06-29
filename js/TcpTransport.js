@@ -13,20 +13,23 @@ var TcpTransport = function TcpTransport(ndn) {
 TcpTransport.prototype.connect = function() {
     if (this.socket != null)
 	delete this.socket;
-	
-    this.socket = require('net').connect({host: this.ndn.host, port: this.ndn.port});
+    
+    // Connect to local ccnd via TCP
+    var net = require('net');
+    this.socket = new net.Socket();
     
     var self = this;
 
     this.socket.on('data', function(data) {			
-	    if (typeof result == 'object') {
-		var bytearray = new Buffer(result);
-	    	
+	    if (typeof data == 'object') {
+		console.log("data");
+		// Make a copy of data (maybe a Buffer or a String)
+		var buf = new Buffer(data);
 		// Find the end of the binary XML element and call ndn.onReceivedElement.
-		self.elementReader.onReceivedData(bytearray);
+		self.elementReader.onReceivedData(buf);
 	    }
 	});
-	
+    
     this.socket.on('connect', function() {
 	    if (LOG > 3) console.log('socket.onopen: TCP connection opened.');
 	    
@@ -37,28 +40,39 @@ TcpTransport.prototype.connect = function() {
 	    interest.interestLifetime = 4000; // milliseconds
 	    self.send(encodeToBinaryInterest(interest));
 	});
-	
+    
     this.socket.on('error', function() {
-	    console.log('socket.onerror: TCP socket error');
+	    if (LOG > 3) console.log('socket.onerror: TCP socket error');
 	});
-	
+    
     this.socket.on('close', function() {
-	    console.log('socket.onclose: TCP connection closed.');
+	    if (LOG > 3) console.log('socket.onclose: TCP connection closed.');
+
 	    self.socket = null;
 	    
 	    // Close NDN when TCP Socket is closed
-	    self.ndn.readyStatus = NDN.CLOSED;
+	    self.ndn.ready_status = NDN.CLOSED;
 	    self.ndn.onclose();
-	    //console.log("NDN.onclose event fired.");
 	});
+
+    this.socket.connect({host: 'localhost', port: 9695});
 };
 
-/*
+/**
  * Send Buffer data.
  */
 TcpTransport.prototype.send = function(/*Buffer*/ data) {
     if (this.sock_ready) {
+	console.log(data.toString('hex'));
         this.socket.write(data);
     } else
 	console.log('TCP connection is not established.');
-}
+};
+
+/**
+ * Close transport
+ */
+TcpTransport.prototype.close = function () {
+    this.socket.end();
+    if (LOG > 3) console.log('TCP connection closed.');
+};

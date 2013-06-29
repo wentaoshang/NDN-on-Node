@@ -17,10 +17,9 @@
  */
 var Name = function Name(_components) {
     if( typeof _components == 'string') {		
-	if(LOG>3)console.log('Content Name String '+_components);
 	this.components = Name.createNameArray(_components);
     }
-    else if(typeof _components === 'object'){		
+    else if(typeof _components == 'object'){		
 	this.components = [];
         if (_components instanceof Name)
             this.add(_components);
@@ -29,20 +28,17 @@ var Name = function Name(_components) {
                 this.add(_components[i]);
         }
     }
-    else if(_components==null)
-	this.components =[];
+    else if (_components == null)
+	this.components = [];
     else
-	if(LOG>1)console.log("NO CONTENT NAME GIVEN");
+	if (LOG > 1) console.log("NO CONTENT NAME GIVEN");
 };
 
 exports.Name = Name;
 
-Name.prototype.getName = function() {
-    return this.to_uri();
-};
 
-/* Parse name as a URI and return an array of Uint8Array components.
- *
+/*
+ * Parse name as a URI and return an array of Uint8Array components.
  */
 Name.createNameArray = function(name) {
     name = name.trim();
@@ -95,8 +91,8 @@ Name.createNameArray = function(name) {
         else
             array[i] = component;
         
-        // Change the component to Uint8Array now.
-        array[i] = new Buffer(array[i]);
+        // Change the component to Buffer now.
+        array[i] = new Buffer(array[i], 'ascii');
     }
 
     return array;
@@ -218,22 +214,6 @@ Name.prototype.indexOfFileName = function() {
 }
 
 
-/**
- * Return true if a1 and a2 are the same length with equal elements.
- */
-var arraysEqual = function(a1, a2){
-    if (a1.length != a2.length)
-        return false;
-    
-    for (var i = 0; i < a1.length; ++i) {
-        if (a1[i] != a2[i])
-            return false;
-    }
-
-    return true;
-};
-
-
 /*
  * Return true if this Name has the same components as name.
  */
@@ -243,7 +223,7 @@ Name.prototype.equalsName = function(name) {
     
     // Start from the last component because they are more likely to differ.
     for (var i = this.components.length - 1; i >= 0; --i) {
-        if (!arraysEqual(this.components[i], name.components[i]))
+        if (!DataUtils.arraysEqual(this.components[i], name.components[i]))
             return false;
     }
     
@@ -278,7 +258,7 @@ Name.getComponentContentDigestValue = function(component) {
         DataUtils.arraysEqual(component.subarray
            (component.length - Name.ContentDigestSuffix.length, component.length),
                               Name.ContentDigestSuffix))
-       return component.subarray(Name.ContentDigestPrefix.length, Name.ContentDigestPrefix.length + 32);
+       return component.slice(Name.ContentDigestPrefix.length, Name.ContentDigestPrefix.length + 32);
    else
        return null;
 }
@@ -331,7 +311,7 @@ Name.prototype.match = function(/*Name*/ name) {
 
     // Check if at least one of given components doesn't match.
     for (var i = 0; i < i_name.length; ++i) {
-        if (!arraysEqual(i_name[i], o_name[i]))
+        if (!DataUtils.arraysEqual(i_name[i], o_name[i]))
             return false;
     }
 

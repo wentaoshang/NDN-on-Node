@@ -13,7 +13,8 @@
 var DynamicUint8Array = function DynamicUint8Array(length) {
     if (!length)
         length = 16;
-    
+
+    //TODO: use node.js Buffer
     this.array = new Uint8Array(length);
     this.length = length;
 };
@@ -50,5 +51,12 @@ DynamicUint8Array.prototype.set = function(value, offset) {
  * Return this.array.subarray(begin, end);
  */
 DynamicUint8Array.prototype.subarray = function(begin, end) {
-    return this.array.slice(begin, end);
+    return this.array.subarray(begin, end);
+}
+
+/*
+ * The same as subarray()
+ */
+DynamicUint8Array.prototype.slice = function(begin, end) {
+    return this.array.subarray(begin, end);
 }

@@ -5,24 +5,19 @@
  * See COPYING for copyright and distribution information.
  */
 
-var XML_EXT = 0x00; 
-	
+/**
+ * Ported to node.js by Wentao Shang
+ */
+
+var XML_EXT = 0x00; 	
 var XML_TAG = 0x01; 
-	
 var XML_DTAG = 0x02; 
-	
 var XML_ATTR = 0x03; 
- 
 var XML_DATTR = 0x04; 
-	
 var XML_BLOB = 0x05; 
-	
 var XML_UDATA = 0x06; 
-	
 var XML_CLOSE = 0x0;
-
 var XML_SUBTYPE_PROCESSING_INSTRUCTIONS = 16; 
-
 
 var XML_TT_BITS = 3;
 var XML_TT_MASK = ((1 << XML_TT_BITS) - 1);
@@ -46,17 +41,20 @@ var BinaryXMLEncoder = function BinaryXMLEncoder(){
     this.CODEC_NAME = "Binary";
 };
 
+exports.CcnbEncoder = BinaryXMLEncoder;
+
 /*
- * Encode utf8Content as utf8.
+ * Encode string in utf8.
  */
-BinaryXMLEncoder.prototype.writeUString = function(/*String*/ utf8Content) {
-    this.encodeUString(utf8Content, XML_UDATA);
+BinaryXMLEncoder.prototype.writeUString = function(/*String*/ utf8str) {
+    this.encodeUString(utf8str, XML_UDATA);
 };
 
 
-BinaryXMLEncoder.prototype.writeBlob = function(/*Buffer*/ binaryContent) {	
-    if(LOG >3) console.log(binaryContent);
-    this.encodeBlob(binaryContent, binaryContent.length);
+BinaryXMLEncoder.prototype.writeBlob = function(/*Buffer*/ blob) {
+    if (LOG > 4) console.log("writeBlob: ");
+    if (LOG > 4) console.log(blob);
+    this.encodeBlob(blob, blob.length);
 };
 
 
@@ -64,7 +62,7 @@ BinaryXMLEncoder.prototype.writeStartElement = function(
 	/*String*/ tag, 
 	/*TreeMap<String,String>*/ attributes) {
 
-    /*Long*/ var dictionaryVal = tag; //stringToTag(tag);
+    var dictionaryVal = tag;
 	
     if (null == dictionaryVal) {
 	this.encodeUString(tag, XML_TAG);
@@ -92,7 +90,7 @@ BinaryXMLEncoder.prototype.writeAttributes = function(/*TreeMap<String,String>*/
 
     // the keySet of a TreeMap is sorted.
 
-    for(var i=0; i<attributes.length;i++){
+    for(var i = 0; i < attributes.length; i++) {
 	var strAttr = attributes[i].k;
 	var strValue = attributes[i].v;
 
@@ -108,7 +106,6 @@ BinaryXMLEncoder.prototype.writeAttributes = function(/*TreeMap<String,String>*/
 	}
 	// Write value
 	this.encodeUString(strValue);
-		
     }
 }
 
@@ -126,7 +123,7 @@ var stringToTag = function(/*long*/ tagVal) {
 //returns a Long
 var tagToString = function(/*String*/ tagName) {
     // the slow way, but right now we don't care.... want a static lookup for the forward direction
-    for (var i=0; i < CCNProtocolDTagsStrings.length; ++i) {
+    for (var i = 0; i < CCNProtocolDTagsStrings.length; i++) {
 	if ((null != CCNProtocolDTagsStrings[i]) && (CCNProtocolDTagsStrings[i] == tagName)) {
 	    return i;
 	}
@@ -146,23 +143,23 @@ BinaryXMLEncoder.prototype.writeElement = function(
 		//byte[] 
 		Content,
 		//TreeMap<String, String> 
-		attributes
-		) {
+		attributes) {
+
     this.writeStartElement(tag, attributes);
     // Will omit if 0-length
-	
+    
     if(typeof Content === 'number') {
 	if(LOG>4) console.log('GOING TO WRITE THE NUMBER .charCodeAt(0) ' + Content.toString().charCodeAt(0) );
 	if(LOG>4) console.log('GOING TO WRITE THE NUMBER ' + Content.toString() );
 	if(LOG>4) console.log('type of number is ' + typeof Content.toString() );
-		
+	
 	this.writeUString(Content.toString());
 	//whatever
     }
     else if(typeof Content === 'string'){
 	if(LOG>4) console.log('GOING TO WRITE THE STRING  ' + Content );
 	if(LOG>4) console.log('type of STRING is ' + typeof Content );
-		
+	
 	this.writeUString(Content);
     }
     else{
@@ -176,22 +173,15 @@ BinaryXMLEncoder.prototype.writeElement = function(
 
 
 
-var TypeAndVal = function TypeAndVal(_type,_val) {
+var TypeAndVal = function TypeAndVal(_type, _val) {
     this.type = _type;
     this.val = _val;
 };
 
 
-BinaryXMLEncoder.prototype.encodeTypeAndVal = function(
-		//int
-		type, 
-		//long 
-		val
-		) {
-	
-    if(LOG>4) console.log('Encoding type '+ type+ ' and value '+ val);
-	
-    if(LOG>4) console.log('OFFSET IS ' + this.offset);
+BinaryXMLEncoder.prototype.encodeTypeAndVal = function (type, val) {
+    if(LOG>4) console.log('Encoding type ' + type + ' and value '+ val);
+    if(LOG>4) console.log('Offset is ' + this.offset);
 	
     if ((type > XML_UDATA) || (type < 0) || (val < 0)) {
 	throw new Error("Tag and value must be positive, and tag valid.");
@@ -223,7 +213,7 @@ BinaryXMLEncoder.prototype.encodeTypeAndVal = function(
 	throw new Error( "This should not happen: miscalculated encoding");
 	//Log.warning(Log.FAC_ENCODING, "This should not happen: miscalculated encoding length, have " + val + " left.");
     }
-    this.offset+= numEncodingBytes;
+    this.offset += numEncodingBytes;
 	
     return numEncodingBytes;
 };
@@ -231,54 +221,35 @@ BinaryXMLEncoder.prototype.encodeTypeAndVal = function(
 /*
  * Encode ustring as utf8.
  */
-BinaryXMLEncoder.prototype.encodeUString = function(
-		//String 
-		ustring, 
-		//byte 
-		type) {
-	
+BinaryXMLEncoder.prototype.encodeUString = function (ustring, type) {
     if (null == ustring)
 	return;
     if (type == XML_TAG || type == XML_ATTR && ustring.length == 0)
 	return;
-	
-    if(LOG>3) console.log("The string to write is ");
-    if(LOG>3) console.log(ustring);
+    
+    if(LOG>4) console.log("The string to write is ");
+    if(LOG>4) console.log(ustring);
 
-    var strBytes = DataUtils.stringToUtf8Array(ustring);
-	
+    var strBytes = new Buffer(ustring);
+    
     this.encodeTypeAndVal(type, 
 			  (((type == XML_TAG) || (type == XML_ATTR)) ?
 			   (strBytes.length-1) :
 			   strBytes.length));
-	
-    if(LOG>3) console.log("THE string to write is ");
-	
-    if(LOG>3) console.log(strBytes);
-	
+    
+    if(LOG>4) console.log("THE string buffer to write is ");
+    if(LOG>4) console.log(strBytes);
+    
     this.writeString(strBytes);
-    this.offset+= strBytes.length;
+    this.offset += strBytes.length;
 };
 
 
-
-BinaryXMLEncoder.prototype.encodeBlob = function(
-		//Uint8Array 
-		blob, 
-		//int 
-		length) {
-
+BinaryXMLEncoder.prototype.encodeBlob = function (blob, length) {
     if (null == blob)
 	return;
-	
+    
     if(LOG>4) console.log('LENGTH OF XML_BLOB IS '+length);
-	
-    /*blobCopy = new Array(blob.Length);
-	
-      for (i = 0; i < blob.length; i++) //in InStr.ToCharArray())
-      {
-      blobCopy[i] = blob[i];
-      }*/
 
     this.encodeTypeAndVal(XML_BLOB, length);
 
@@ -290,15 +261,13 @@ var ENCODING_LIMIT_1_BYTE = ((1 << (XML_TT_VAL_BITS)) - 1);
 var ENCODING_LIMIT_2_BYTES = ((1 << (XML_TT_VAL_BITS + XML_REG_VAL_BITS)) - 1);
 var ENCODING_LIMIT_3_BYTES = ((1 << (XML_TT_VAL_BITS + 2 * XML_REG_VAL_BITS)) - 1);
 
-BinaryXMLEncoder.prototype.numEncodingBytes = function(
-		//long
-		x) {
+BinaryXMLEncoder.prototype.numEncodingBytes = function (x) {
     if (x <= ENCODING_LIMIT_1_BYTE) return (1);
     if (x <= ENCODING_LIMIT_2_BYTES) return (2);
     if (x <= ENCODING_LIMIT_3_BYTES) return (3);
-	
+    
     var numbytes = 1;
-	
+    
     // Last byte gives you XML_TT_VAL_BITS
     // Remainder each give you XML_REG_VAL_BITS
     x = x >>> XML_TT_VAL_BITS;
@@ -314,25 +283,21 @@ BinaryXMLEncoder.prototype.writeDateTime = function(
 		tag, 
 		//CCNTime 
 		dateTime) {
-	
+    
     if(LOG>4)console.log('ENCODING DATE with LONG VALUE');
     if(LOG>4)console.log(dateTime.msec);
-	
-    //var binarydate = DataUtils.unsignedLongToByteArray( Math.round((dateTime.msec/1000) * 4096)  );
-	
-
+    
     //parse to hex
     var binarydate =  Math.round((dateTime.msec/1000) * 4096).toString(16)  ;
 
     //HACK
-    var binarydate =  DataUtils.toNumbers( '0'.concat(binarydate,'0')) ;
-
-	
+    var binarydate =  new Buffer('0'.concat(binarydate,'0')) ;
+    
     if(LOG>4)console.log('ENCODING DATE with BINARY VALUE');
     if(LOG>4)console.log(binarydate);
     if(LOG>4)console.log('ENCODING DATE with BINARY VALUE(HEX)');
     if(LOG>4)console.log(DataUtils.toHex(binarydate));
-	
+    
     this.writeElement(tag, binarydate);
 };
 
@@ -355,24 +320,14 @@ BinaryXMLEncoder.prototype.writeString = function(input) {
 		
 	this.writeBlobArray(input);
     }
-    /*
-      else if(typeof input === 'object'){
-		
-      }	
-    */
 };
 
 
-BinaryXMLEncoder.prototype.writeBlobArray = function(
-		//Uint8Array 
-		blob) {
-	
-    if(LOG>4) console.log('GOING TO WRITE A BLOB');
-    
+BinaryXMLEncoder.prototype.writeBlobArray = function (/* Buffer */ blob) {	
     this.ostream.set(blob, this.offset);
 };
 
 
-BinaryXMLEncoder.prototype.getReducedOstream = function() {
-    return newBuffer(this.ostream.subarray(0, this.offset));
+BinaryXMLEncoder.prototype.getReducedOstream = function () {
+    return new Buffer(this.ostream.subarray(0, this.offset));
 };

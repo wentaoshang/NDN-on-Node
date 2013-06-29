@@ -9,6 +9,7 @@ cat ../../Closure.js \
   ../../TcpTransport.js \
   ../../util/CCNProtocolDTags.js \
   ../../util/CCNTime.js \
+  ../../util/DataUtils.js \
   ../../Name.js \
   ../../ContentObject.js \
   ../../Interest.js \
@@ -22,6 +23,5 @@ cat ../../Closure.js \
   ../../encoding/BinaryXMLDecoder.js \
   ../../encoding/BinaryXMLStructureDecoder.js \
   ../../encoding/EncodingUtils.js \
-  ../../security/KeyManager.js \
   ../../NDN.js \
   > ndn.js

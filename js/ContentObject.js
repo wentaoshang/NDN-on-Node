@@ -11,8 +11,7 @@
 var ContentObject = function ContentObject(_name, _signedInfo, _content, _signature) {	
     if (typeof _name == 'string') {
 	this.name = new Name(_name);
-    }
-    else{
+    } else {
 	//TODO Check the class of _name
 	this.name = _name;
     }
@@ -26,11 +25,8 @@ var ContentObject = function ContentObject(_name, _signedInfo, _content, _signat
 	
     this.signature = _signature;
 
-	
     this.startSIG = null;
     this.endSIG = null;
-	
-    //this.startSignedInfo = null;
     this.endContent = null;
 	
     this.rawSignatureData = null;
@@ -38,7 +34,11 @@ var ContentObject = function ContentObject(_name, _signedInfo, _content, _signat
 
 exports.ContentObject = ContentObject;
 
-ContentObject.prototype.sign = function(){
+ContentObject.prototype.sign = function (/* Key */ key) {
+    if (key == null) {
+	console.log("Cannot sign data without a key :(");
+	return;
+    }
     var n1 = this.encodeObject(this.name);
     var n2 = this.encodeObject(this.signedInfo);
     var n3 = this.encodeContent();
@@ -48,40 +48,29 @@ ContentObject.prototype.sign = function(){
     rsa.update(n2);
     rsa.update(n3);
     
-    var sig = rsa.sign(globalKeyManager.privateKey);
+    var sig = new Buffer(rsa.sign(key.privateKey));
 
     this.signature.signature = sig;
 };
 
 ContentObject.prototype.encodeObject = function encodeObject(obj) {
-    var enc = new BinaryXMLEncoder();
- 
+    var enc = new BinaryXMLEncoder(); 
     obj.to_ccnb(enc);
-    
-    var num = enc.getReducedOstream();
-
-    return num;	
+    return enc.getReducedOstream();
 };
 
 ContentObject.prototype.encodeContent = function encodeContent(obj) {
     var enc = new BinaryXMLEncoder();
-
     enc.writeElement(CCNProtocolDTags.Content, this.content);
-
-    var num = enc.getReducedOstream();
-
-    return num;	
+    return enc.getReducedOstream();	
 };
 
-ContentObject.prototype.saveRawData = function(bytes) {
-    var sigBits = bytes.subarray(this.startSIG, this.endSIG);
-
+ContentObject.prototype.saveRawData = function (bytes) {
+    var sigBits = bytes.slice(this.startSIG, this.endSIG);
     this.rawSignatureData = sigBits;
 };
 
 ContentObject.prototype.from_ccnb = function(/*XMLDecoder*/ decoder) {
-    // TODO VALIDATE THAT ALL FIELDS EXCEPT SIGNATURE ARE PRESENT
-
     decoder.readStartElement(this.getElementLabel());
 
     if (decoder.peekStartElement(CCNProtocolDTags.Signature)) {
@@ -113,21 +102,19 @@ ContentObject.prototype.from_ccnb = function(/*XMLDecoder*/ decoder) {
     this.saveRawData(decoder.istream);
 };
 
-ContentObject.prototype.to_ccnb = function(/*XMLEncoder*/ encoder) {
-    //TODO verify name, SignedInfo and Signature is present
-
+ContentObject.prototype.to_ccnb = function (encoder) {
     encoder.writeStartElement(this.getElementLabel());
 
-    if (null!=this.signature) this.signature.to_ccnb(encoder);
+    if (null != this.signature)
+	this.signature.to_ccnb(encoder);
 	
     this.startSIG = encoder.offset;
     
-    if (null!=this.name) this.name.to_ccnb(encoder);
-	
-    //this.endSIG = encoder.offset;
-    //this.startSignedInfo = encoder.offset;
+    if (null != this.name)
+	this.name.to_ccnb(encoder);
     	
-    if (null!=this.signedInfo) this.signedInfo.to_ccnb(encoder);
+    if (null != this.signedInfo)
+	this.signedInfo.to_ccnb(encoder);
 
     encoder.writeElement(CCNProtocolDTags.Content, this.content);
 
@@ -150,6 +137,8 @@ var Signature = function Signature(_witness, _signature, _digestAlgorithm) {
     this.signature = _signature;//byte [] _signature;
     this.digestAlgorithm = _digestAlgorithm//String _digestAlgorithm;
 };
+
+exports.Signature = Signature;
 
 Signature.prototype.from_ccnb = function( decoder) {
     decoder.readStartElement(this.getElementLabel());
@@ -210,43 +199,36 @@ var ContentTypeValue = {0:0x0C04C0, 1:0x10D091,2:0x18E344,3:0x28463F,4:0x2C834A,
 var ContentTypeValueReverse = {0x0C04C0:0, 0x10D091:1,0x18E344:2,0x28463F:3,0x2C834A:4,0x34008A:5};
 
 var SignedInfo = function SignedInfo(_publisher, _timestamp, _type, _locator, _freshnessSeconds, _finalBlockID) {
-    //TODO, Check types
-
     this.publisher = _publisher; //publisherPublicKeyDigest
-    this.timestamp=_timestamp; // CCN Time
-    this.type=_type; // ContentType
-    this.locator =_locator;//KeyLocator
-    this.freshnessSeconds =_freshnessSeconds; // Integer
-    this.finalBlockID=_finalBlockID; //byte array
-    
-    // SWT: merge setFields() method into constructor
-    this.setFields();
+    this.timestamp = _timestamp; // CCN Time
+    this.type = _type; // ContentType
+    this.locator = _locator; //KeyLocator
+    this.freshnessSeconds = _freshnessSeconds; // Integer
+    this.finalBlockID = _finalBlockID; //byte array
 };
 
-SignedInfo.prototype.setFields = function(){
-    //BASE64 -> RAW STRING
-    var publicKeyBytes = new Buffer(globalKeyManager.certificate, 'base64');
+exports.SignedInfo = SignedInfo;
+
+SignedInfo.prototype.setFields = function (/* Key */ key) {
+    var publicKeyBytes = new Buffer(key.certificate, 'base64');
     
     var hash = require("crypto").createHash('sha256');
     hash.update(publicKeyBytes);
-    var publisherKeyDigest = hash.digest();
+    var publisherKeyDigest = new Buffer(hash.digest());
 
     this.publisher = new PublisherPublicKeyDigest(publisherKeyDigest);
     
     var d = new Date();
-	
     var time = d.getTime();
 
     this.timestamp = new CCNTime(time);
     
     if(LOG>4)console.log('TIME msec is');
-
     if(LOG>4)console.log(this.timestamp.msec);
 
-    //DATA
     this.type = 0;//0x0C04C0;//ContentTypeValue[ContentType.DATA];
 
-    this.locator = new KeyLocator(publicKeyBytes, KeyLocatorType.KEY );
+    this.locator = new KeyLocator(publicKeyBytes, KeyLocatorType.KEY);
 };
 
 SignedInfo.prototype.from_ccnb = function (decoder) {
@@ -265,18 +247,15 @@ SignedInfo.prototype.from_ccnb = function (decoder) {
 
     if (decoder.peekStartElement(CCNProtocolDTags.Type)) {
 	binType = decoder.readBinaryElement(CCNProtocolDTags.Type);//byte [] 
-		
-			
+
 	//TODO Implement type of Key Reading
-			
+
 	if(LOG>4)console.log('Binary Type of of Signed Info is '+binType);
 
-	this.type = binType;
-			
+	this.type = binType;			
 			
 	//TODO Implement type of Key Reading
-			
-			
+
 	if (null == this.type) {
 	    throw new Error("Cannot parse signedInfo type: bytes.");
 	}
@@ -310,30 +289,29 @@ SignedInfo.prototype.to_ccnb = function (encoder) {
     }
     encoder.writeStartElement(this.getElementLabel());
 		
-    if (null!=this.publisher) {
-	if(LOG>3) console.log('ENCODING PUBLISHER KEY' + this.publisher.publisherPublicKeyDigest);
+    if (null != this.publisher) {
+	if(LOG>4) console.log('ENCODING PUBLISHER KEY' + this.publisher.publisherPublicKeyDigest.toString('hex'));
 
 	this.publisher.to_ccnb(encoder);
     }
 
-    if (null!=this.timestamp) {
+    if (null != this.timestamp) {
 	encoder.writeDateTime(CCNProtocolDTags.Timestamp, this.timestamp );
     }
 		
-    if (null!=this.type && this.type !=0) {
-			
+    if (null != this.type && this.type !=0) {
 	encoder.writeElement(CCNProtocolDTags.type, this.type);
     }
 		
-    if (null!=this.freshnessSeconds) {
+    if (null != this.freshnessSeconds) {
 	encoder.writeElement(CCNProtocolDTags.FreshnessSeconds, this.freshnessSeconds);
     }
 
-    if (null!=this.finalBlockID) {
+    if (null != this.finalBlockID) {
 	encoder.writeElement(CCNProtocolDTags.FinalBlockID, this.finalBlockID);
     }
 
-    if (null!=this.locator) {
+    if (null != this.locator) {
 	this.locator.to_ccnb(encoder);
     }
 

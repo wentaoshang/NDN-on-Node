@@ -8,7 +8,7 @@
  * Ported to node.js by Wentao Shang
  */
 
-var LOG = 0;
+var LOG = 4;
 
 /**
  * settings is an associative array with the following defaults:
@@ -24,9 +24,7 @@ var LOG = 0;
 var NDN = function NDN(settings) {
     settings = (settings || {});
     this.transport = new TcpTransport(this);
-    this.host = (settings.host !== undefined ? settings.host : 'localhost');
-    this.port = (settings.port || 9696);
-    this.readyStatus = NDN.UNOPEN;
+    this.ready_status = NDN.UNOPEN;
     this.verify = (settings.verify !== undefined ? settings.verify : true);
 
     // Event handler
@@ -43,6 +41,24 @@ NDN.CLOSED = 2;  // connection to ccnd closed
 
 NDN.ccndIdFetcher = new Name('/%C1.M.S.localhost/%C1.M.SRV/ccnd/KEY');
 
+// Wrapper to connect to local ccnd
+NDN.prototype.connect = function () {
+    this.transport.connect();
+};
+
+// Wrapper to send Buffer of data
+NDN.prototype.send = function (/*Buffer*/ data) {
+    if (this.ready_status == NDN.OPENED) {
+        this.transport.send(data);
+    } else
+	console.log('NDN connection is not opened.');
+};
+
+NDN.prototype.close = function () {
+    this.ready_status = NDN.CLOSED;
+    this.transport.close();
+};
+
 // For fetching data
 var PITTable = new Array();
 
@@ -52,10 +68,8 @@ var PITEntry = function PITEntry(interest, closure) {
     this.timerID = -1;  // Timer ID
 };
 
-// Return the longest entry from NDN.PITTable that matches name.
-var getEntryForExpressedInterest = function(/*Name*/ name) {
-    // TODO: handle multiple matches?  Maybe not from registerPrefix because multiple ContentObject
-    //   could be sent for one Interest?
+// Return the longest entry from PITTable that matches name.
+var getEntryForExpressedInterest = function (/*Name*/ name) {
     var result = null;
     
     for (var i = 0; i < PITTable.length; i++) {
@@ -77,7 +91,7 @@ var CSEntry = function CSEntry(name, closure) {
     this.closure = closure;  // Closure
 };
 
-function getEntryForRegisteredPrefix(/* Name */ name) {
+var getEntryForRegisteredPrefix = function (/* Name */ name) {
     for (var i = 0; i < CSTable.length; i++) {
 	if (CSTable[i].name.match(name) != null)
 	    return CSTable[i];
@@ -95,7 +109,7 @@ function getEntryForRegisteredPrefix(/* Name */ name) {
 /**
  *  The use of closure here is not right. Should use 'OnData' and 'OnTimeOut' callbacks   ---SWT
  */
-NDN.prototype.express_interest = function(/*Name*/ name, /*Closure*/ closure, /*Interest*/ template) {
+NDN.prototype.expressInterest = function(/*Name*/ name, /*Closure*/ closure, /*Interest*/ template) {
     if (this.readyStatus != NDN.OPENED) {
 	console.log('Connection is not established.');
 	return;
@@ -119,10 +133,7 @@ NDN.prototype.express_interest = function(/*Name*/ name, /*Closure*/ closure, /*
 	var pitEntry = new PITEntry(interest, closure);
 	PITTable.push(pitEntry);
 	closure.pitEntry = pitEntry;
-    }
 
-    // Set interest timer
-    if (closure != null) {
 	if (interest.interestLifetime == null)
 	    // Use default timeout value
 	    interest.interestLifetime = 4000;
@@ -131,13 +142,13 @@ NDN.prototype.express_interest = function(/*Name*/ name, /*Closure*/ closure, /*
 	    pitEntry.timerID = setTimeout(function() {
 		    if (LOG > 3) console.log("Interest time out.");
 					
-		    // Remove PIT entry from NDN.PITTable.
-		    var index = NDN.PITTable.indexOf(pitEntry);
-		    //console.log(NDN.PITTable);
+		    // Remove PIT entry from PITTable.
+		    var index = PITTable.indexOf(pitEntry);
+		    //console.log(PITTable);
 		    if (index >= 0)
-			NDN.PITTable.splice(index, 1);
-		    //console.log(NDN.PITTable);
-		    //console.log(pitEntry.interest.name.getName());
+			PITTable.splice(index, 1);
+		    //console.log(PITTable);
+		    //console.log(pitEntry.interest.name.to_uri());
 					
 		    // Raise closure callback
 		    closure.upcall(Closure.UPCALL_INTEREST_TIMED_OUT, new UpcallInfo(ndn, interest, 0, null));
@@ -149,7 +160,7 @@ NDN.prototype.express_interest = function(/*Name*/ name, /*Closure*/ closure, /*
     this.transport.send(encodeToBinaryInterest(interest));
 };
 
-NDN.prototype.set_interest_filter = function(name, closure, flag) {
+NDN.prototype.setInterestFilter = function(name, closure, flag) {
     if (this.readyStatus != NDN.OPENED) {
 	console.log('Connection is not established.');
     }
@@ -190,13 +201,13 @@ NDN.prototype.onReceivedElement = function(element) {
     // Dispatch according to packet type
     if (decoder.peekStartElement(CCNProtocolDTags.Interest)) {  // Interest packet
 	if (LOG > 3) console.log('Interest packet received.');
-				
+	
 	var interest = new Interest();
 	interest.from_ccnb(decoder);
 	if (LOG > 3) console.log(interest);
 	var name = interest.name;
 	if (LOG > 3) console.log(name);
-				
+	
 	var entry = getEntryForRegisteredPrefix(name);
 	if (entry != null) {
 	    //console.log(entry);
@@ -220,22 +231,20 @@ NDN.prototype.onReceivedElement = function(element) {
 		// Close NDN if we fail to connect to a ccn router
 		this.readyStatus = NDN.CLOSED;
 		this.onclose();
-		//console.log("NDN.onclose event fired.");
 	    } else {
-		if (LOG>3) console.log('Connected to ccnd.');
+		if (LOG>3) console.log('Connected to local ccnd.');
 		this.ccndid = co.signedInfo.publisher.publisherPublicKeyDigest;
-		if (LOG>3) console.log(ndn.ccndid);
+		if (LOG>3) console.log('Local ccnd ID is ' + this.ccndid.toString('hex'));
 						
 		// Call NDN.onopen after success
 		this.readyStatus = NDN.OPENED;
 		this.onopen();
-		//console.log("NDN.onopen event fired.");
 	    }
 	} else {
 	    var pitEntry = getEntryForExpressedInterest(co.name);
 	    if (pitEntry != null) {
 		//console.log(pitEntry);
-		// Remove PIT entry from NDN.PITTable
+		// Remove PIT entry from PITTable
 		var index = PITTable.indexOf(pitEntry);
 		if (index >= 0)
 		    PITTable.splice(index, 1);
@@ -318,7 +327,7 @@ NDN.prototype.onReceivedElement = function(element) {
 			    // Fetch key now
 			    if (LOG > 3) console.log("Fetch key according to keylocator");
 			    var nextClosure = new KeyFetchClosure(co, currentClosure, keylocator.keyName, sigHex, wit);
-			    this.express_interest(keylocator.keyName.contentName.getPrefix(4), nextClosure);
+			    this.expressInterest(keylocator.keyName.contentName.getPrefix(4), nextClosure);
 			}
 		    } else if (keylocator.type == KeyLocatorType.KEY) {
 			if (LOG > 3) console.log("Keylocator contains KEY");
@@ -357,23 +366,6 @@ var BinaryXmlElementReader = function BinaryXmlElementReader(elementListener) {
 };
 
 
-/*
- * arrays is an array of Uint8Array. Return a new Uint8Array which is the concatenation of all.
- */
-var concatArrays = function(arrays) {
-    var totalLength = 0;
-	for (var i = 0; i < arrays.length; ++i)
-        totalLength += arrays[i].length;
-    
-    var result = new Uint8Array(totalLength);
-    var offset = 0;
-	for (var i = 0; i < arrays.length; ++i) {
-        result.set(arrays[i], offset);
-        offset += arrays[i].length;
-    }
-    return result;
-}
-
 BinaryXmlElementReader.prototype.onReceivedData = function(/* Buffer */ rawData) {
     // Process multiple objects in the data.
     while(true) {
@@ -382,7 +374,7 @@ BinaryXmlElementReader.prototype.onReceivedData = function(/* Buffer */ rawData)
         if (this.structureDecoder.findElementEnd(rawData)) {
             // Got the remainder of an object.  Report to the caller.
             this.dataParts.push(rawData.slice(0, this.structureDecoder.offset));
-            this.elementListener.onReceivedElement(concatArrays(this.dataParts));
+            this.elementListener.onReceivedElement(DataUtils.concatArrays(this.dataParts));
         
             // Need to read a new object.
             rawData = rawData.slice(this.structureDecoder.offset, rawData.length);
@@ -400,5 +392,5 @@ BinaryXmlElementReader.prototype.onReceivedData = function(/* Buffer */ rawData)
 	    if (LOG>3) console.log('Incomplete packet received. Length ' + rawData.length + '. Wait for more input.');
             return;
         }
-    }    
+    }
 }

@@ -23,7 +23,7 @@ var Interest = function Interest
     this.answerOriginKind = _answerOriginKind;
     this.scope = _scope;
     this.interestLifetime = _interestLifetime;  // milli seconds
-    this.nonce = _nonce;	
+    this.nonce = _nonce;
 };
 
 exports.Interest = Interest;
@@ -82,11 +82,10 @@ Interest.prototype.from_ccnb = function (/*XMLDecoder*/ decoder) {
 };
 
 Interest.prototype.to_ccnb = function (/*XMLEncoder*/ encoder) {
-    //Could check if name is present
-		
     encoder.writeStartElement(CCNProtocolDTags.Interest);
-		
-    this.name.to_ccnb(encoder);
+
+    if (null != this.name)
+	this.name.to_ccnb(encoder);
 	
     if (null != this.minSuffixComponents) 
 	encoder.writeElement(CCNProtocolDTags.MinSuffixComponents, this.minSuffixComponents);	

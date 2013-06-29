@@ -8,18 +8,44 @@
  * Ported to node.js by Wentao Shang
  */
 
+/* TODO: Port from PyCCN:
+   generateRSA()
+   privateToDER()
+   publicToDER()
+   privateToPEM()
+   publicToPEM()
+   fromDER()
+   fromPEM()
+*/
 
-var Key = function Key(){
-    /* TODO: Port from PyCCN:
-	generateRSA()
-	privateToDER()
-	publicToDER()
-	privateToPEM()
-	publicToPEM()
-	fromDER()
-	fromPEM()
-     */
-}
+/**
+ * Key
+ */
+var Key = function Key() {
+    this.certificate = null;
+    this.privateKey = null;
+};
+
+exports.Key = Key;
+
+Key.prototype.fromPemFile = function (file) {
+    var pem = require('fs').readFileSync(file).toString();
+    if (LOG>4) console.log("Content in PEM file: \n" + pem);
+
+    var cert_pat = /-----BEGIN\sCERTIFICATE-----[\s\S]*-----END\sCERTIFICATE-----/;
+    this.certificate = cert_pat.exec(pem).toString();
+    // Remove the '-----XXX-----' from the beginning and the end of the certificate
+    // and also remove any \n in the certificate string
+    var lines = this.certificate.split('\n');
+    this.certificate = "";
+    for (var i = 1; i < lines.length - 1; i++)
+	this.certificate += lines[i];
+    if (LOG>4) console.log("Key.certificate: \n" + this.certificate);
+
+    var pri_pat = /-----BEGIN\sRSA\sPRIVATE\sKEY-----[\s\S]*-----END\sRSA\sPRIVATE\sKEY-----/;
+    this.privateKey = pri_pat.exec(pem).toString();
+    if (LOG>4) console.log("Key.privateKey: \n" + this.privateKey);
+};
 
 /**
  * KeyLocator
@@ -35,16 +61,16 @@ exports.KeyLocatorType = KeyLocatorType;
 var KeyLocator = function KeyLocator(_input, _type) { 
     this.type = _type;
     
-    if (_type == KeyLocatorType.KEYNAME){
-    	if (LOG>3) console.log('KeyLocator: SET KEYNAME');
+    if (_type == KeyLocatorType.KEYNAME) {
+    	if (LOG>3) console.log('KeyLocator: Set KEYNAME to ' + _input.to_uri());
     	this.keyName = _input;
     }
-    else if (_type == KeyLocatorType.KEY){
-    	if (LOG>3) console.log('KeyLocator: SET KEY');
+    else if (_type == KeyLocatorType.KEY) {
+    	if (LOG>3) console.log('KeyLocator: Set KEY to ' + _input.toString('hex'));
     	this.publicKey = _input;
     }
-    else if (_type == KeyLocatorType.CERTIFICATE){
-    	if (LOG>3) console.log('KeyLocator: SET CERTIFICATE');
+    else if (_type == KeyLocatorType.CERTIFICATE) {
+    	if (LOG>3) console.log('KeyLocator: Set CERTIFICATE to ' + input.toString('hex'));
     	this.certificate = _input;
     }
 };
@@ -61,7 +87,7 @@ KeyLocator.prototype.from_ccnb = function(decoder) {
 			
 	    //TODO FIX THIS, This should create a Key Object instead of keeping bytes
 
-	    this.publicKey =   encodedKey;//CryptoUtil.getPublicKey(encodedKey);
+	    this.publicKey = encodedKey;
 	    this.type = KeyLocatorType.KEY;
 	    
 	    if(LOG>4) console.log('PUBLIC KEY FOUND: '+ this.publicKey);
@@ -105,7 +131,7 @@ KeyLocator.prototype.from_ccnb = function(decoder) {
     }
     decoder.readEndElement();
 };
-	
+
 
 KeyLocator.prototype.to_ccnb = function (encoder) {	
     if(LOG>4) console.log('type is is ' + this.type);
@@ -114,31 +140,26 @@ KeyLocator.prototype.to_ccnb = function (encoder) {
 	throw new ContentEncodingException("Cannot encode " + this.getClass().getName() + ": field values missing.");
     }
 
-	
     //TODO FIX THIS TOO
     encoder.writeStartElement(this.getElementLabel());
 	
     if (this.type == KeyLocatorType.KEY) {
-	if(LOG>5)console.log('About to encode a public key' +this.publicKey);
+	if(LOG>5)console.log('About to encode a public key' + this.publicKey);
 	encoder.writeElement(CCNProtocolDTags.Key, this.publicKey);
-		
     } else if (this.type == KeyLocatorType.CERTIFICATE) {
-		
 	try {
 	    encoder.writeElement(CCNProtocolDTags.Certificate, this.certificate);
 	} catch ( e) {
 	    throw new Error("CertificateEncodingException attempting to write key locator: " + e);
 	}
-		
     } else if (this.type == KeyLocatorType.KEYNAME) {
-		
 	this.keyName.to_ccnb(encoder);
     }
     encoder.writeEndElement();	
 };
 
 KeyLocator.prototype.getElementLabel = function() {
-    return CCNProtocolDTags.KeyLocator; 
+    return CCNProtocolDTags.KeyLocator;
 };
 
 KeyLocator.prototype.validate = function() {
