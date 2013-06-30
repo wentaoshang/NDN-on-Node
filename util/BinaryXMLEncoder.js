@@ -215,15 +215,7 @@ BinaryXMLEncoder.prototype.writeDateTime = function (tag, dateTime) {
     if(LOG>4)console.log(dateTime.msec);
     
     //parse to hex
-    var ccndate = Math.round((dateTime.msec / 1000) * 4096).toString(16);
-
-    if (ccndate.length % 2 == 1)
-	ccndate = '0' + ccndate;
-
-    if(LOG>4)console.log('ENCODING DATE with CCN DATA VALUE:');
-    if(LOG>4)console.log(ccndate);
-
-    var binarydate = new Buffer(ccndate, 'hex');
+    var binarydate = DataUtils.nonNegativeIntToBigEndian((dateTime.msec / 1000) * 4096);
     
     if(LOG>4)console.log('ENCODING DATE with BINARY VALUE(HEX):');
     if(LOG>4)console.log(binarydate);

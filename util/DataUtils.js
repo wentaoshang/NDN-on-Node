@@ -44,16 +44,10 @@ DataUtils.arraysEqual = function (a1, a2) {
 };
 
 /*
- * Convert the big endian Uint8Array to an unsigned int.
- * Don't check for overflow.
+ * Convert the big endian Buffer to an unsigned int.
  */
-DataUtils.bigEndianToUnsignedInt = function (bytes) {
-    var result = 0;
-    for (var i = 0; i < bytes.length; ++i) {
-        result <<= 8;
-        result += bytes[i];
-    }
-    return result;
+DataUtils.bigEndianToUnsignedInt = function (/*Buffer*/ bytes) {
+    return parseInt(bytes.toString('hex'), 16);
 };
 
 /*
@@ -65,14 +59,9 @@ DataUtils.nonNegativeIntToBigEndian = function (value) {
     if (value <= 0)
         return new Buffer(0);
     
-    // Assume value is not over 64 bits.
-    var size = 8;
-    var result = new Buffer(size);
-    var i = 0;
-    while (value != 0) {
-        ++i;
-        result[size - i] = value & 0xff;
-        value >>= 8;
-    }
-    return result.slice(size - i, size);
+    var hex = value.toString(16);
+    if (hex.length % 2 == 1)
+	hex = '0' + hex;
+    
+    return new Buffer(hex, 'hex');
 };
