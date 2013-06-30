@@ -44,18 +44,24 @@ NDN.ccndIdFetcher = new Name('/%C1.M.S.localhost/%C1.M.SRV/ccnd/KEY');
 
 // Wrapper to connect to local ccnd
 NDN.prototype.connect = function () {
+    if (this.ready_status == NDN.OPENED)
+	throw new NoNError('NDNError', 'cannot connect because connection is already opened.');
+
     this.transport.connect(this);
 };
 
 // Wrapper to send Buffer of data
 NDN.prototype.send = function (/*Buffer*/ data) {
-    if (this.ready_status == NDN.OPENED) {
-        this.transport.send(data);
-    } else
-	console.log('NDN connection is not opened.');
+    if (this.ready_status != NDN.OPENED)
+	throw new NoNError('NDNError', 'cannot send because connection is not opened.');
+    
+    this.transport.send(data);
 };
 
 NDN.prototype.close = function () {
+    if (this.ready_status != NDN.OPENED)
+	throw new NoNError('NDNError', 'cannot close because connection is not opened.');
+
     this.ready_status = NDN.CLOSED;
     this.transport.close();
 };
