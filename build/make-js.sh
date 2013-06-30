@@ -5,8 +5,7 @@ then
     rm ndn.js
 fi
 
-cat ../Closure.js \
-  ../TcpTransport.js \
+cat ../TcpTransport.js \
   ../util/CCNProtocolDTags.js \
   ../util/CCNTime.js \
   ../util/DataUtils.js \
@@ -21,5 +20,6 @@ cat ../Closure.js \
   ../encoding/BinaryXMLEncoder.js \
   ../encoding/BinaryXMLDecoder.js \
   ../encoding/BinaryXMLStructureDecoder.js \
+  ../Closure.js \
   ../NDN.js \
   > ndn.js

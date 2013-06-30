@@ -83,25 +83,25 @@ var CSEntry = function CSEntry(name, closure) {
     this.closure = closure;  // Closure
 };
 
-var getEntryForRegisteredPrefix = function (/* Name */ name) {
+var getEntryForRegisteredPrefix = function (name) {
     for (var i = 0; i < CSTable.length; i++) {
 	if (CSTable[i].name.match(name) != null)
 	    return CSTable[i];
     }
     return null;
-}
+};
 
-/** 
- *  Encode name as an Interest. If template is not null, use its attributes.
- *  Send the interest to host:port, read the entire response and call
- *  closure.upcall(Closure.UPCALL_CONTENT (or Closure.UPCALL_CONTENT_UNVERIFIED),
- *                 new UpcallInfo(this, interest, 0, contentObject)).                 
- */
+
+// Verification status
+NDN.CONTENT = 0; // content verified
+NDN.CONTENT_UNVERIFIED = 1; // content that has not been verified
+NDN.CONTENT_BAD = 2; // verification failed
 
 /**
- *  The use of closure here is not right. Should use 'OnData' and 'OnTimeOut' callbacks   ---SWT
+ * Prototype of 'onData': function (interest, contentObject, verification_status) {}
+ * Prototype of 'onTimeOut': function (interest) {}
  */
-NDN.prototype.expressInterest = function(/*Name*/ name, /*Closure*/ closure, /*Interest*/ template) {
+NDN.prototype.expressInterest = function (name, template, onData, onTimeOut) {
     if (this.ready_status != NDN.OPENED) {
 	console.log('Connection is not established.');
 	return;
@@ -121,40 +121,40 @@ NDN.prototype.expressInterest = function(/*Name*/ name, /*Closure*/ closure, /*I
     else
         interest.interestLifetime = 4000;   // default interest timeout value in milliseconds.
 
-    if (closure != null) {
-	var pitEntry = new PITEntry(interest, closure);
-	PITTable.push(pitEntry);
-	closure.pitEntry = pitEntry;
+    var closure = new DataClosure(onData, onTimeOut);
+    var pitEntry = new PITEntry(interest, closure);
+    PITTable.push(pitEntry);
 
-	if (interest.interestLifetime == null)
-	    // Use default timeout value
-	    interest.interestLifetime = 4000;
+    if (interest.interestLifetime == null)
+	// Use default timeout value
+	interest.interestLifetime = 4000;
 	
-	if (interest.interestLifetime > 0) {
-	    var self = this;
-	    pitEntry.timerID = setTimeout(function() {
-		    if (LOG > 3) console.log("Interest time out.");
+    if (interest.interestLifetime > 0) {
+	var self = this;
+	pitEntry.timerID = setTimeout(function() {
+		if (LOG > 3) console.log("Interest time out.");
 					
-		    // Remove PIT entry from PITTable.
-		    var index = PITTable.indexOf(pitEntry);
-		    //console.log(PITTable);
-		    if (index >= 0)
-			PITTable.splice(index, 1);
-		    //console.log(PITTable);
-		    //console.log(pitEntry.interest.name.to_uri());
+		// Remove PIT entry from PITTable.
+		var index = PITTable.indexOf(pitEntry);
+		//console.log(PITTable);
+		if (index >= 0)
+		    PITTable.splice(index, 1);
+		//console.log(PITTable);
+		//console.log(pitEntry.interest.name.to_uri());
 					
-		    // Raise closure callback
-		    closure.upcall(Closure.UPCALL_INTEREST_TIMED_OUT, new UpcallInfo(self, interest, 0, null));
-		}, interest.interestLifetime);  // interestLifetime is in milliseconds.
-	    //console.log(closure.timerID);
-	}
+		// Raise timeout callback
+		closure.onTimeout(pitEntry.interest);
+	    }, interest.interestLifetime);  // interestLifetime is in milliseconds.
+	//console.log(closure.timerID);
     }
 
     this.transport.send(interest.encodeToBinary());
 };
 
-
-NDN.prototype.registerPrefix = function(prefix, closure, flag) {
+/**
+ * Prototype of 'onInterest': function (interest) {}
+ */
+NDN.prototype.registerPrefix = function(prefix, onInterest) {
     if (this.ready_status != NDN.OPENED) {
 	console.log('Connection is not established.');
 	return;
@@ -184,6 +184,7 @@ NDN.prototype.registerPrefix = function(prefix, closure, flag) {
     var interest = new Interest(interestName);
     interest.scope = 1;
     
+    var closure = new InterestClosure(onInterest);
     var csEntry = new CSEntry(prefix, closure);
     CSTable.push(csEntry);
 
@@ -214,10 +215,7 @@ NDN.prototype.onReceivedElement = function(element) {
 	var entry = getEntryForRegisteredPrefix(name);
 	if (entry != null) {
 	    //console.log(entry);
-	    var info = new UpcallInfo(this, interest, 0, null);
-	    var ret = entry.closure.upcall(Closure.UPCALL_INTEREST, info);
-	    if (ret == Closure.RESULT_INTEREST_CONSUMED && info.contentObject != null) 
-		this.transport.send(info.contentObject.encodeToBinary());
+	    entry.closure.onInterest(interest);
 	}				
     } else if (decoder.peekStartElement(CCNProtocolDTags.ContentObject)) {  // Content packet
 	if (LOG > 3) console.log('ContentObject received.');
@@ -265,7 +263,7 @@ NDN.prototype.onReceivedElement = function(element) {
 
 		    if (co.signature.Witness != null) {
 			// Bypass verification if Witness is present
-			cl.upcall(Closure.UPCALL_CONTENT_UNVERIFIED, new UpcallInfo(this, null, 0, co));
+			cl.onData(pitEntry.interest, co, NDN.CONTENT_UNVERIFIED);
 			return;
 		    }
 
@@ -284,12 +282,12 @@ NDN.prototype.onReceivedElement = function(element) {
 			verifier.update(co.signedData);
 			var verified = verifier.verify(keyPem, sig);
 
-			var flag = (verified == true) ? Closure.UPCALL_CONTENT : Closure.UPCALL_CONTENT_BAD;
+			var flag = (verified == true) ? NDN.CONTENT : NDN.CONTENT_BAD;
 			// Raise callback
-			cl.upcall(Closure.UPCALL_CONTENT, new UpcallInfo(this, null, 0, co));
+			cl.onData(pitEntry.interest, co, flag);
 		    } else {
 			if (LOG > 3) console.log("KeyLocator does not contain KEY. Leave for user to verify data.");
-			cl.upcall(Closure.UPCALL_CONTENT_UNVERIFIED, new UpcallInfo(this, null, 0, co));
+			cl.onData(pitEntry.interest, co, NDN.CONTENT_UNVERIFIED);
 		    }
 		}
 	    }

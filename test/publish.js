@@ -2,7 +2,6 @@ var NDN = require('../build/ndn.js').NDN;
 var Name = require('../build/ndn.js').Name;
 var Interest = require('../build/ndn.js').Interest;
 var ContentObject = require('../build/ndn.js').ContentObject;
-var Closure = require('../build/ndn.js').Closure;
 var Signature = require('../build/ndn.js').Signature;
 var SignedInfo = require('../build/ndn.js').SignedInfo;
 var Key = require('../build/ndn.js').Key;
@@ -10,28 +9,16 @@ var Key = require('../build/ndn.js').Key;
 var key = new Key();
 key.fromPemFile('./testpub.pem', './testpri.pem');
 
-var MyClosure = function MyClosure() {
-    // Inherit from Closure.
-    Closure.call(this);
-};
+var onInterest = function (interest) {
+    console.log('Interest received in callback.');
 
-MyClosure.prototype.upcall = function(kind, upcallInfo) {
-    console.log('MyClosure.upcall() called.');
-    if (kind == Closure.UPCALL_FINAL) {
-	// Do nothing.
-    } else if (kind == Closure.UPCALL_INTEREST) {
-	var interest = upcallInfo.interest;
+    var si = new SignedInfo();
+    si.setFields(key);
 
-	var si = new SignedInfo();
-	si.setFields(key);
+    var co = new ContentObject(interest.name, si, 'NDN on Node\n', new Signature());
+    co.sign(key);
 
-	var co = new ContentObject(interest.name, si, 'NDN on Node\n', new Signature());
-	co.sign(key);
-
-	upcallInfo.contentObject = co;
-	return Closure.RESULT_INTEREST_CONSUMED;
-    }
-    return Closure.RESULT_OK;
+    ndn.send(co.encodeToBinary());
 };
 
 var ndn = new NDN();
@@ -39,7 +26,7 @@ ndn.default_key = key;
 
 ndn.onopen = function () {
     var n = new Name('/wentao.shang/regtest001');
-    ndn.registerPrefix(n, new MyClosure());
+    ndn.registerPrefix(n, onInterest);
     console.log('Prefix registered.');
 };
 
