@@ -30,12 +30,14 @@ PublisherPublicKeyDigest.prototype.from_ccnb = function (decoder) {
 };
 
 PublisherPublicKeyDigest.prototype.to_ccnb = function (encoder) {
+    if (LOG>4) console.log('Encoding PublisherPublicKeyDigest...');
     //TODO Check that the ByteArray for the key is present
     if (!this.validate()) {
 	throw new Error("Cannot encode : field values missing.");
     }
-    if(LOG>4) console.log('PUBLISHER KEY DIGEST IS' + this.publisherPublicKeyDigest.toString('hex'));
+    if(LOG>4) console.log('PUBLISHER KEY DIGEST IS ' + this.publisherPublicKeyDigest.toString('hex'));
     encoder.writeElement(this.getElementLabel(), this.publisherPublicKeyDigest);
+    if(LOG>4) console.log('Finish encoding PublisherPublicKeyDigest.');
 };
 
 PublisherPublicKeyDigest.prototype.getElementLabel = function () { return CCNProtocolDTags.PublisherPublicKeyDigest; };

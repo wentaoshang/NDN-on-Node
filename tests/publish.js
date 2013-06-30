@@ -3,10 +3,12 @@ var Name = require('../build/ndn.js').Name;
 var Interest = require('../build/ndn.js').Interest;
 var ContentObject = require('../build/ndn.js').ContentObject;
 var Closure = require('../build/ndn.js').Closure;
+var Signature = require('../build/ndn.js').Signature;
+var SignedInfo = require('../build/ndn.js').SignedInfo;
 var Key = require('../build/ndn.js').Key;
 
 var key = new Key();
-key.fromPemFile('./test.pem');
+key.fromPemFile('./testpub.pem', './testpri.pem');
 
 var MyClosure = function MyClosure() {
     // Inherit from Closure.
@@ -23,7 +25,7 @@ MyClosure.prototype.upcall = function(kind, upcallInfo) {
 	var si = new SignedInfo();
 	si.setFields(key);
 
-	var co = new ContentObject(interest.name, si, content, new Signature());
+	var co = new ContentObject(interest.name, si, 'NDN on Node\n', new Signature());
 	co.sign(key);
 
 	upcallInfo.contentObject = co;
@@ -36,7 +38,8 @@ var ndn = new NDN();
 ndn.default_key = key;
 
 ndn.onopen = function () {
-    var n = new Name('/ndn/ucla.edu/cs/wentao/test1');
+    var n = new Name('/wentao.shang/regtest001');
+    console.log('Name binary is: ' + n.encodeToBinary().toString('hex'));
     ndn.registerPrefix(n, new MyClosure());
     console.log('Prefix registered.');
 };

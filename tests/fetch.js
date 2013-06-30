@@ -23,6 +23,8 @@ MyClosure.prototype.upcall = function(kind, upcallInfo) {
     } else if (kind == Closure.UPCALL_INTEREST_TIMED_OUT) {
 	console.log("Interest time out.");
     }
+
+    console.log('Quit script now.');
     ndn.close();  // This will cause the script to quit
     return Closure.RESULT_OK;
 };
@@ -31,7 +33,7 @@ var ndn = new NDN({verify:false});
 //var ndn = new NDN();
 
 ndn.onopen = function () {
-    var n = new Name('/ndn/ucla.edu/cs/wentao/test1');
+    var n = new Name('/wentao.shang/regtest001');
     var template = new Interest();
     template.interestLifetime = 4000;
     ndn.expressInterest(n, new MyClosure(), template);

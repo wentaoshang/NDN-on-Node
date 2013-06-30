@@ -41,6 +41,7 @@ Interest.DEFAULT_ANSWER_ORIGIN_KIND = Interest.ANSWER_CONTENT_STORE | Interest.A
 
 
 Interest.prototype.from_ccnb = function (/*XMLDecoder*/ decoder) {
+    if (LOG>4) console.log('--------Start decoding Interest...');
     decoder.readStartElement(CCNProtocolDTags.Interest);
 
     this.name = new Name();
@@ -79,9 +80,13 @@ Interest.prototype.from_ccnb = function (/*XMLDecoder*/ decoder) {
 	this.nonce = decoder.readBinaryElement(CCNProtocolDTags.Nonce);
 		
     decoder.readEndElement();
+
+    if (LOG>4) console.log('--------Finish decoding Interest.');
 };
 
 Interest.prototype.to_ccnb = function (/*XMLEncoder*/ encoder) {
+    if (LOG>4) console.log('--------Encoding Interest....');
+
     encoder.writeStartElement(CCNProtocolDTags.Interest);
 
     if (null != this.name)
@@ -116,6 +121,8 @@ Interest.prototype.to_ccnb = function (/*XMLEncoder*/ encoder) {
 	encoder.writeElement(CCNProtocolDTags.Nonce, this.nonce);
 		
     encoder.writeEndElement();
+
+    if (LOG>4) console.log('--------Finish encoding Interest.');
 };
 
 

@@ -15,15 +15,16 @@ var ForwardingEntry = function ForwardingEntry(_action, _prefixName, _ccndId, _f
     this.prefixName = _prefixName;
     //PublisherPublicKeyDigest 
     this.ccndID = _ccndId;
-    //Integer		
+    //Integer
     this.faceID = _faceID;
-    //Integer		
+    //Integer
     this.flags = _flags;
-    //Integer 		
+    //Integer
     this.lifetime = _lifetime;  // in seconds
 };
 
 ForwardingEntry.prototype.from_ccnb = function (/*XMLDecoder*/ decoder) {
+    if (LOG > 4) console.log('Start decoding ForwardingEntry...');
     decoder.readStartElement(this.getElementLabel());
     if (decoder.peekStartElement(CCNProtocolDTags.Action)) {
 	this.action = decoder.readUTF8Element(CCNProtocolDTags.Action); 
@@ -46,12 +47,14 @@ ForwardingEntry.prototype.from_ccnb = function (/*XMLDecoder*/ decoder) {
 	this.lifetime = decoder.readIntegerElement(CCNProtocolDTags.FreshnessSeconds); 
     }
     decoder.readEndElement();
+    if (LOG > 4) console.log('Finish decoding ForwardingEntry.');
 };
 
 /**
  * Used by NetworkObject to encode the object to a network stream.
  */
 ForwardingEntry.prototype.to_ccnb =function(/*XMLEncoder*/ encoder) {
+    if (LOG > 4) console.log('--------Encoding ForwardingEntry...');
     encoder.writeStartElement(this.getElementLabel());
     if (null != this.action && this.action.length != 0)
 	encoder.writeElement(CCNProtocolDTags.Action, this.action);	
@@ -70,7 +73,8 @@ ForwardingEntry.prototype.to_ccnb =function(/*XMLEncoder*/ encoder) {
     if (null != this.lifetime) {
 	encoder.writeElement(CCNProtocolDTags.FreshnessSeconds, this.lifetime);
     }
-    encoder.writeEndElement();   			
+    encoder.writeEndElement();
+    if (LOG > 4) console.log('--------Finish encoding ForwardingEntry.');
 };
 
 ForwardingEntry.prototype.encodeToBinary = function () {

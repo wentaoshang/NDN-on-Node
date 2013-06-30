@@ -128,6 +128,8 @@ Name.createNameArray = function(name) {
 
 
 Name.prototype.from_ccnb = function(/*XMLDecoder*/ decoder) {
+    if (LOG>4) console.log('--------Start decoding Name...');
+
     decoder.readStartElement(this.getElementLabel());
 		
     this.components = new Array(); //new ArrayList<byte []>();
@@ -137,10 +139,14 @@ Name.prototype.from_ccnb = function(/*XMLDecoder*/ decoder) {
     }
 		
     decoder.readEndElement();
+
+    if (LOG>4) console.log('--------Finish decoding Name.');
 };
 
 Name.prototype.to_ccnb = function(/*XMLEncoder*/ encoder) {
-    if( this.components ==null ) 
+    if (LOG>4) console.log('--------Encoding Name...');
+
+    if (this.components == null)
 	throw new Error("CANNOT ENCODE EMPTY CONTENT NAME");
 
     encoder.writeStartElement(this.getElementLabel());
@@ -149,6 +155,14 @@ Name.prototype.to_ccnb = function(/*XMLEncoder*/ encoder) {
 	encoder.writeElement(CCNProtocolDTags.Component, this.components[i]);
     }
     encoder.writeEndElement();
+
+    if (LOG>4) console.log('--------Finish encoding Name.');
+};
+
+Name.prototype.encodeToBinary = function () {
+    var enc = new BinaryXMLEncoder();
+    this.to_ccnb(enc);
+    return enc.getReducedOstream();
 };
 
 Name.prototype.getElementLabel = function(){

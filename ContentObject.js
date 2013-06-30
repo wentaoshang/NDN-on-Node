@@ -71,21 +71,19 @@ ContentObject.prototype.saveRawData = function (bytes) {
 };
 
 ContentObject.prototype.from_ccnb = function(/*XMLDecoder*/ decoder) {
+    if (LOG > 4) console.log('--------Start decoding ContentObject...');
+
     decoder.readStartElement(this.getElementLabel());
 
     if (decoder.peekStartElement(CCNProtocolDTags.Signature)) {
 	this.signature = new Signature();
 	this.signature.from_ccnb(decoder);
     }
-		
-    //this.endSIG = decoder.offset;
 
     this.startSIG = decoder.offset;
 
     this.name = new Name();
     this.name.from_ccnb(decoder);
-		
-    //this.startSignedInfo = decoder.offset;	
 		
     if (decoder.peekStartElement(CCNProtocolDTags.SignedInfo)) {
 	this.signedInfo = new SignedInfo();
@@ -93,16 +91,19 @@ ContentObject.prototype.from_ccnb = function(/*XMLDecoder*/ decoder) {
     }
 		
     this.content = decoder.readBinaryElement(CCNProtocolDTags.Content);
-		
-    //this.endContent = decoder.offset;
+
     this.endSIG = decoder.offset;
 		
     decoder.readEndElement();
 		
     this.saveRawData(decoder.istream);
+
+    if (LOG > 4) console.log('--------Finish decoding ContentObject.');
 };
 
 ContentObject.prototype.to_ccnb = function (encoder) {
+    if (LOG > 4) console.log('--------Encoding ContentObject...');
+
     encoder.writeStartElement(this.getElementLabel());
 
     if (null != this.signature)
@@ -124,7 +125,9 @@ ContentObject.prototype.to_ccnb = function (encoder) {
     
     encoder.writeEndElement();
 	
-    this.saveRawData(encoder.ostream);	
+    this.saveRawData(encoder.ostream);
+
+    if (LOG > 4) console.log('--------Finish encoding ContentObject');
 };
 
 ContentObject.prototype.encodeToBinary = function () {
@@ -146,10 +149,10 @@ var Signature = function Signature(_witness, _signature, _digestAlgorithm) {
 
 exports.Signature = Signature;
 
-Signature.prototype.from_ccnb = function( decoder) {
-    decoder.readStartElement(this.getElementLabel());
-		
-    if(LOG>4)console.log('STARTED DECODING SIGNATURE');
+Signature.prototype.from_ccnb = function (decoder) {
+    if(LOG>4) console.log('--------Start decoding Signature...');
+
+    decoder.readStartElement(this.getElementLabel());	
 		
     if (decoder.peekStartElement(CCNProtocolDTags.DigestAlgorithm)) {
 	if(LOG>4)console.log('DIGIEST ALGORITHM FOUND');
@@ -165,17 +168,21 @@ Signature.prototype.from_ccnb = function( decoder) {
     if(LOG>4)console.log('SIGNATURE FOUND');
     this.signature = decoder.readBinaryElement(CCNProtocolDTags.SignatureBits);
 
-    decoder.readEndElement();	
+    decoder.readEndElement();
+
+    if(LOG>4) console.log('--------Finish decoding Signature.');
 };
 
 
 Signature.prototype.to_ccnb = function (encoder) {
+    if (LOG > 4) console.log('--------Encoding Signature...');
+
     if (!this.validate()) {
 	throw new Error("Cannot encode: field values missing.");
     }
 	
     encoder.writeStartElement(this.getElementLabel());
-	
+/*
     if ((null != this.digestAlgorithm) && (!this.digestAlgorithm.equals(CCNDigestHelper.DEFAULT_DIGEST_ALGORITHM))) {
 	encoder.writeElement(CCNProtocolDTags.DigestAlgorithm, OIDLookup.getDigestOID(this.DigestAlgorithm));
     }
@@ -184,10 +191,12 @@ Signature.prototype.to_ccnb = function (encoder) {
 	// needs to handle null witness
 	encoder.writeElement(CCNProtocolDTags.Witness, this.Witness);
     }
-
+*/
     encoder.writeElement(CCNProtocolDTags.SignatureBits, this.signature);
 
-    encoder.writeEndElement();   		
+    encoder.writeEndElement();
+
+    if (LOG > 4) console.log('--------Finish encoding Signature.');
 };
 
 Signature.prototype.getElementLabel = function() { return CCNProtocolDTags.Signature; };
@@ -216,7 +225,7 @@ var SignedInfo = function SignedInfo(_publisher, _timestamp, _type, _locator, _f
 exports.SignedInfo = SignedInfo;
 
 SignedInfo.prototype.setFields = function (/* Key */ key) {
-    var publicKeyBytes = new Buffer(key.certificate, 'base64');
+    var publicKeyBytes = key.publicKey; // Buffer
     
     var hash = require("crypto").createHash('sha256');
     hash.update(publicKeyBytes);
@@ -238,6 +247,8 @@ SignedInfo.prototype.setFields = function (/* Key */ key) {
 };
 
 SignedInfo.prototype.from_ccnb = function (decoder) {
+    if (LOG > 4) console.log('--------Start decoding SignedInfo...');
+
     decoder.readStartElement( this.getElementLabel() );
 		
     if (decoder.peekStartElement(CCNProtocolDTags.PublisherPublicKeyDigest)) {
@@ -285,11 +296,15 @@ SignedInfo.prototype.from_ccnb = function (decoder) {
 	this.locator = new KeyLocator();
 	this.locator.from_ccnb(decoder);
     }
-				
+    
     decoder.readEndElement();
+
+    if (LOG > 4) console.log('--------Finish decoding SignedInfo.');
 };
 
 SignedInfo.prototype.to_ccnb = function (encoder) {
+    if (LOG > 4) console.log('--------Encoding SignedInfo...');
+
     if (!this.validate()) {
 	throw new Error("Cannot encode : field values missing.");
     }
@@ -297,13 +312,11 @@ SignedInfo.prototype.to_ccnb = function (encoder) {
     encoder.writeStartElement(this.getElementLabel());
     	
     if (null != this.publisher) {
-	if(LOG>4) console.log('ENCODING PUBLISHER KEY' + this.publisher.publisherPublicKeyDigest.toString('hex'));
-
 	this.publisher.to_ccnb(encoder);
     }
     
     if (null != this.timestamp) {
-	encoder.writeDateTime(CCNProtocolDTags.Timestamp, this.timestamp );
+	encoder.writeDateTime(CCNProtocolDTags.Timestamp, this.timestamp);
     }
     	
     if (null != this.type && this.type != ContentType.DATA) {
@@ -322,7 +335,9 @@ SignedInfo.prototype.to_ccnb = function (encoder) {
 	this.locator.to_ccnb(encoder);
     }
 
-    encoder.writeEndElement();   		
+    encoder.writeEndElement();
+
+    if (LOG > 4) console.log('--------Finish encoding SignedInfo.');
 };
 
 
