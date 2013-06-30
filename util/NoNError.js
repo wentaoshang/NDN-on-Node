@@ -16,5 +16,5 @@ NoNError.prototype.toString = function () {
     var msg = this.message;
     if (name == null) name = "NoNError";
     if (msg == null) msg = "an error is thrown.";
-    return name + ':' + msg;
+    return name + ': ' + msg;
 };

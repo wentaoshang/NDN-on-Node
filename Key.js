@@ -34,10 +34,6 @@ Key.prototype.fromPemFile = function (pub, pri) {
     }
 
     // Read public key
-    // SWT: I haven't found an useful node.js library
-    // to convert certificate into public key. For now,
-    // user has to specify two key files, one for public
-    // key and the other for private key.
 
     var pubpem = require('fs').readFileSync(pub).toString();
     if (LOG>4) console.log("Content in public key PEM file: \n" + pubpem);
@@ -52,6 +48,8 @@ Key.prototype.fromPemFile = function (pub, pri) {
 	pubKey += lines[i];
     this.publicKey = new Buffer(pubKey, 'base64');
     if (LOG>4) console.log("Key.publicKey: \n" + this.publicKey.toString('hex'));
+
+    // Read private key
 
     var pem = require('fs').readFileSync(pri).toString();
     if (LOG>4) console.log("Content in private key PEM file: \n" + pem);
@@ -109,11 +107,11 @@ KeyLocator.prototype.from_ccnb = function(decoder) {
 	    if(LOG>4) console.log('PUBLIC KEY FOUND: '+ this.publicKey.toString('hex'));
 	    //this.publicKey = encodedKey;			
 	} catch (e) {
-	    throw new Error("Cannot parse key: ", e);
+	    throw new NoNError('KeyError', "cannot parse key");
 	}
 
 	if (null == this.publicKey) {
-	    throw new Error("Cannot parse key: ");
+	    throw new NoNError('KeyError', "cannot parse public key");
 	}
 
     } else if (decoder.peekStartElement(CCNProtocolDTags.Certificate)) {
@@ -134,10 +132,10 @@ KeyLocator.prototype.from_ccnb = function(decoder) {
 	    if(LOG>4) console.log('CERTIFICATE FOUND: '+ this.certificate);
 
 	} catch (e) {
-	    throw new Error("Cannot decode certificate: " +  e);
+	    throw new NoNError('KeyError', "cannot decode certificate.");
 	}
 	if (null == this.certificate) {
-	    throw new Error("Cannot parse certificate! ");
+	    throw new NoNError('KeyError', "cannot parse certificate!");
 	}
     } else  {
 	this.type = KeyLocatorType.KEYNAME;
@@ -156,7 +154,7 @@ KeyLocator.prototype.to_ccnb = function (encoder) {
     if(LOG>4) console.log('type is is ' + this.type);
     //TODO Check if Name is missing
     if (!this.validate()) {
-	throw new ContentEncodingException("Cannot encode " + this.getClass().getName() + ": field values missing.");
+	throw new NoNError('KeyError', "cannot encode " + this.getClass().getName() + ": field values missing.");
     }
 
     //TODO FIX THIS TOO
@@ -169,7 +167,7 @@ KeyLocator.prototype.to_ccnb = function (encoder) {
 	try {
 	    encoder.writeElement(CCNProtocolDTags.Certificate, this.certificate);
 	} catch (e) {
-	    throw new Error("CertificateEncodingException attempting to write key locator: " + e);
+	    throw new NoNError('KeyError', "certificate encoding error");
 	}
     } else if (this.type == KeyLocatorType.KEYNAME) {
 	this.keyName.to_ccnb(encoder);
@@ -219,7 +217,7 @@ KeyName.prototype.to_ccnb = function (encoder) {
     if (LOG>4) console.log('Encoding KeyName...');
 
     if (!this.validate()) {
-	throw new Error("Cannot encode : field values missing.");
+	throw new NoNError('KeyError', "cannot encode : field values missing.");
     }
 	
     encoder.writeStartElement(this.getElementLabel());
