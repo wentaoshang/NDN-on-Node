@@ -102,7 +102,7 @@ var getEntryForRegisteredPrefix = function (/* Name */ name) {
  *  The use of closure here is not right. Should use 'OnData' and 'OnTimeOut' callbacks   ---SWT
  */
 NDN.prototype.expressInterest = function(/*Name*/ name, /*Closure*/ closure, /*Interest*/ template) {
-    if (this.readyStatus != NDN.OPENED) {
+    if (this.ready_status != NDN.OPENED) {
 	console.log('Connection is not established.');
 	return;
     }
@@ -155,7 +155,7 @@ NDN.prototype.expressInterest = function(/*Name*/ name, /*Closure*/ closure, /*I
 
 
 NDN.prototype.registerPrefix = function(prefix, closure, flag) {
-    if (this.readyStatus != NDN.OPENED) {
+    if (this.ready_status != NDN.OPENED) {
 	console.log('Connection is not established.');
 	return;
     }
@@ -232,15 +232,15 @@ NDN.prototype.onReceivedElement = function(element) {
 		console.log("Cannot contact router, close NDN now.");
 		
 		// Close NDN if we fail to connect to a ccn router
-		this.readyStatus = NDN.CLOSED;
-		this.onclose();
+		this.ready_status = NDN.CLOSED;
+		this.transport.close();
 	    } else {
 		if (LOG>3) console.log('Connected to local ccnd.');
 		this.ccndid = co.signedInfo.publisher.publisherPublicKeyDigest;
 		if (LOG>3) console.log('Local ccnd ID is ' + this.ccndid.toString('hex'));
 		
 		// Call NDN.onopen after success
-		this.readyStatus = NDN.OPENED;
+		this.ready_status = NDN.OPENED;
 		this.onopen();
 	    }
 	} else {
