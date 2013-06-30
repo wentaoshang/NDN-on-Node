@@ -15,17 +15,7 @@ var DataUtils = function DataUtils () {};
  * arrays is an array of Buffers. Return a new Buffer which is the concatenation of all.
  */
 DataUtils.concatArrays = function (arrays) {
-    var totalLength = 0;
-    for (var i = 0; i < arrays.length; ++i)
-        totalLength += arrays[i].length;
-    
-    var result = new Buffer(totalLength);
-    var offset = 0;
-    for (var i = 0; i < arrays.length; ++i) {
-	arrays[i].copy(result, offset);
-        offset += arrays[i].length;
-    }
-    return result;
+    return Buffer.concat(arrays);
 }
 
 /**
