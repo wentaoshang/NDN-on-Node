@@ -55,9 +55,9 @@ BinaryXMLDecoder.prototype.readStartElement = function (startTag) {
     tv = this.decodeTypeAndVal();
     		
     if (null == tv) {
-	throw new ContentDecodingException(new Error("Expected start element: " + startTag + " got something not a tag."));
+	throw new NoNError('DecodeError', "expected start element: " + startTag + " got something not a tag.");
     }
-    		
+    
     //String 
     var decodedTag = null;
     //console.log(tv);
@@ -66,7 +66,6 @@ BinaryXMLDecoder.prototype.readStartElement = function (startTag) {
     //console.log(XML_TAG);
     if (tv.type() == XML_TAG) {
 	//console.log('got here');
-	//Log.info(Log.FAC_ENCODING, "Unexpected: got tag in readStartElement; looking for tag " + startTag + " got length: " + (int)tv.val()+1);
 	// Tag value represents length-1 as tags can never be empty.
 	var valval ;
 	if(typeof tv.val() == 'string'){
@@ -93,7 +92,7 @@ BinaryXMLDecoder.prototype.readStartElement = function (startTag) {
 			
     if ((null ==  decodedTag) || decodedTag != startTag ) {
 	console.log('expecting '+ startTag + ' but got '+ decodedTag);
-	throw new ContentDecodingException(new Error("Expected start element: " + startTag + " got: " + decodedTag + "(" + tv.val() + ")"));
+	throw new NoNError('DecodeError', "expected start element: " + startTag + " got: " + decodedTag + "(" + tv.val() + ")");
     }
 };
 	
@@ -127,24 +126,15 @@ BinaryXMLDecoder.prototype.peekStartElementAsString = function() {
 		    valval = (tv.val())+ 1;
 				
 		decodedTag = this.decodeUString(valval);
-				
-		//Log.info(Log.FAC_ENCODING, "Unexpected: got text tag in peekStartElement; length: " + valval + " decoded tag = " + decodedTag);
-
 	    } else if (tv.type() == XML_DTAG) {
 		decodedTag = tagToString(tv.val());					
 	    }
 
 	} // else, not a type and val, probably an end element. rewind and return false.
 
-    } catch ( e) {
-
-    } finally {
-	try {
-	    this.offset = previousOffset;
-	} catch ( e) {
-	    Log.logStackTrace(Log.FAC_ENCODING, Level.WARNING, e);
-	    throw new ContentDecodingException(new Error("Cannot reset stream! " + e.getMessage(), e));
-	}
+    }
+    finally {
+	this.offset = previousOffset;
     }
     return decodedTag;
 };
@@ -164,9 +154,8 @@ BinaryXMLDecoder.prototype.peekStartElement = function (startTag) {
 	    return true;
 	}
 	return false;
-    }
-    else{
-	throw new ContentDecodingException(new Error("SHOULD BE STRING OR NUMBER"));
+    } else {
+	throw new NoNError('DecodeError', "should be string or number.");
     }
 }
 
@@ -189,7 +178,7 @@ BinaryXMLDecoder.prototype.peekStartElementAsLong = function() {
 
 	    if (tv.type() == XML_TAG) {
 		if (tv.val()+1 > DEBUG_MAX_LEN) {
-		    throw new ContentDecodingException(new Error("Decoding error: length " + tv.val()+1 + " longer than expected maximum length!"));
+		    throw new NoNError('DecodeError', "length " + (tv.val() + 1) + " longer than expected maximum length!");
 		}
 
 		var valval ;
@@ -204,25 +193,15 @@ BinaryXMLDecoder.prototype.peekStartElementAsLong = function() {
 		var strTag = this.decodeUString(valval);
 					
 		decodedTag = stringToTag(strTag);
-					
-		//Log.info(Log.FAC_ENCODING, "Unexpected: got text tag in peekStartElement; length: " + valval + " decoded tag = " + decodedTag);
-					
 	    } else if (tv.type() == XML_DTAG) {
 		decodedTag = tv.val();					
 	    }
 
 	} // else, not a type and val, probably an end element. rewind and return false.
 
-    } catch ( e) {
-			
-    } finally {
-	try {
-	    //this.istream.reset();
-	    this.offset = previousOffset;
-	} catch ( e) {
-	    Log.logStackTrace(Log.FAC_ENCODING, Level.WARNING, e);
-	    throw new Error("Cannot reset stream! " + e.getMessage(), e);
-	}
+    }
+    finally {
+	this.offset = previousOffset;
     }
     return decodedTag;
 };
@@ -249,7 +228,7 @@ BinaryXMLDecoder.prototype.readEndElement = function(){
 			
     if (next != XML_CLOSE) {
 	console.log("Expected end element, got: " + next);
-	throw new ContentDecodingException(new Error("Expected end element, got: " + next));
+	throw new NoNError('DecodeError', "expected end element, got: " + next);
     }
 };
 
@@ -272,8 +251,6 @@ BinaryXMLDecoder.prototype.readBlob = function () {
 BinaryXMLDecoder.prototype.readDateTime = function (startTag)  {
     var byteTimestamp = this.readBinaryElement(startTag);
 
-    //var lontimestamp = DataUtils.byteArrayToUnsignedLong(byteTimestamp);
-
     byteTimestamp = byteTimestamp.toString('hex');
     
     byteTimestamp = parseInt(byteTimestamp, 16);
@@ -290,7 +267,7 @@ BinaryXMLDecoder.prototype.readDateTime = function (startTag)  {
     //timestamp.setDateBinary(byteTimestamp);
     
     if (null == timestamp) {
-	throw new ContentDecodingException(new Error("Cannot parse timestamp: " + DataUtils.printHexBytes(byteTimestamp)));
+	throw new NoNError('DecodeError', "cannot parse timestamp: " + byteTimestamp.toString('hex'));
     }		
     return timestamp;
 };
@@ -425,18 +402,4 @@ BinaryXMLDecoder.prototype.readUTF8Element = function (startTag) {
  */
 BinaryXMLDecoder.prototype.seek = function (offset) {
     this.offset = offset;
-}
-
-/*
- * Call with: throw new ContentDecodingException(new Error("message")).
- */
-function ContentDecodingException(error) {
-    this.message = error.message;
-    // Copy lineNumber, etc. from where new Error was called.
-    for (var prop in error)
-        this[prop] = error[prop];
-}
-
-ContentDecodingException.prototype = new Error();
-ContentDecodingException.prototype.name = "ContentDecodingException";
-
+};

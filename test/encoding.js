@@ -32,7 +32,7 @@ console.log("Encoding/Decoding content objects...");
 
 var content = "NDN on Node";
 var key = new Key();
-key.fromPemFile('./testpub.pem', './testpri.pem');
+key.fromPemFile('./non.pub', './non.pem');
 
 var si = new SignedInfo();
 si.setFields(key);
