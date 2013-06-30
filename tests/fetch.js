@@ -10,7 +10,6 @@ var MyClosure = function MyClosure() {
 };
 
 MyClosure.prototype.upcall = function(kind, upcallInfo) {
-    console.log("Closure.upcall() executed.");
     if (kind == Closure.UPCALL_FINAL) {
 	// Do nothing.
     } else if (kind == Closure.UPCALL_CONTENT || kind == Closure.UPCALL_CONTENT_UNVERIFIED) {

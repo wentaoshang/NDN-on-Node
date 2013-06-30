@@ -14,7 +14,7 @@ var LOG = 0;
  * NDN wrapper
  */
 var NDN = function NDN() {
-    this.transport = new TcpTransport(this);
+    this.transport = new TcpTransport();
     this.ready_status = NDN.UNOPEN;
 
     // Event handler
@@ -35,7 +35,7 @@ NDN.ccndIdFetcher = new Name('/%C1.M.S.localhost/%C1.M.SRV/ccnd/KEY');
 
 // Wrapper to connect to local ccnd
 NDN.prototype.connect = function () {
-    this.transport.connect();
+    this.transport.connect(this);
 };
 
 // Wrapper to send Buffer of data

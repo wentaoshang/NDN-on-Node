@@ -3,17 +3,18 @@
  * See COPYING for copyright and distribution information.
  */
 
-var TcpTransport = function TcpTransport(ndn) {    
+var TcpTransport = function TcpTransport() {    
     this.socket = null;
     this.sock_ready = false;
-    this.ndn = ndn;
-    this.elementReader = new BinaryXmlElementReader(ndn);
+    this.elementReader = null;
 };
 
-TcpTransport.prototype.connect = function() {
+TcpTransport.prototype.connect = function(ndn) {
     if (this.socket != null)
 	delete this.socket;
-    
+
+    this.elementReader = new BinaryXmlElementReader(ndn);
+
     // Connect to local ccnd via TCP
     var net = require('net');
     this.socket = new net.Socket();
@@ -50,15 +51,15 @@ TcpTransport.prototype.connect = function() {
 	    self.socket = null;
 	    
 	    // Close NDN when TCP Socket is closed
-	    self.ndn.ready_status = NDN.CLOSED;
-	    self.ndn.onclose();
+	    ndn.ready_status = NDN.CLOSED;
+	    ndn.onclose();
 	});
 
     this.socket.connect({host: 'localhost', port: 9695});
 };
 
 /**
- * Send Buffer data.
+ * Send data.
  */
 TcpTransport.prototype.send = function(/*Buffer*/ data) {
     if (this.sock_ready) {
