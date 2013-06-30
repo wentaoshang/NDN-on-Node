@@ -42,7 +42,7 @@ NDN.CLOSED = 2;  // connection to ccnd closed
 
 NDN.ccndIdFetcher = new Name('/%C1.M.S.localhost/%C1.M.SRV/ccnd/KEY');
 
-// Wrapper to connect to local ccnd
+// Connect NDN wrapper to local ccnd
 NDN.prototype.connect = function () {
     if (this.ready_status == NDN.OPENED)
 	throw new NoNError('NDNError', 'cannot connect because connection is already opened.');
@@ -50,7 +50,7 @@ NDN.prototype.connect = function () {
     this.transport.connect(this);
 };
 
-// Wrapper to send Buffer of data
+// Send Buffer of data through NDN wrapper
 NDN.prototype.send = function (/*Buffer*/ data) {
     if (this.ready_status != NDN.OPENED)
 	throw new NoNError('NDNError', 'cannot send because connection is not opened.');
@@ -58,6 +58,7 @@ NDN.prototype.send = function (/*Buffer*/ data) {
     this.transport.send(data);
 };
 
+// Close NDN wrapper
 NDN.prototype.close = function () {
     if (this.ready_status != NDN.OPENED)
 	throw new NoNError('NDNError', 'cannot close because connection is not opened.');
@@ -149,11 +150,8 @@ NDN.prototype.expressInterest = function (name, template, onData, onTimeOut) {
 					
 		// Remove PIT entry from PITTable.
 		var index = PITTable.indexOf(pitEntry);
-		//console.log(PITTable);
 		if (index >= 0)
 		    PITTable.splice(index, 1);
-		//console.log(PITTable);
-		//console.log(pitEntry.interest.name.to_uri());
 					
 		// Raise timeout callback
 		closure.onTimeout(pitEntry.interest);
@@ -187,7 +185,7 @@ NDN.prototype.registerPrefix = function(prefix, onInterest) {
     si.setFields(this.default_key);
 
     var co = new ContentObject(new Name(), si, bytes, new Signature()); 
-    co.sign(this.default_key);
+    co.sign(this.default_key);  // Use default key to sign registration packet
     var coBinary = co.encodeToBinary();
 
     var interestName = new Name(['ccnx', this.ccndid, 'selfreg', coBinary]);
@@ -214,25 +212,22 @@ NDN.prototype.onReceivedElement = function(element) {
     var decoder = new BinaryXMLDecoder(element);
     // Dispatch according to packet type
     if (decoder.peekStartElement(CCNProtocolDTags.Interest)) {  // Interest packet
-	if (LOG > 3) console.log('Interest received.');
-	
 	var interest = new Interest();
 	interest.from_ccnb(decoder);
-	if (LOG > 3) console.log(interest);
-	var name = interest.name;
-	if (LOG > 3) console.log(name);
 	
-	var entry = getEntryForRegisteredPrefix(name);
+	if (LOG > 3) console.log('Interest name is ' + interest.name.to_uri());
+	
+	var entry = getEntryForRegisteredPrefix(interest.name);
 	if (entry != null) {
 	    //console.log(entry);
 	    entry.closure.onInterest(interest);
 	}				
     } else if (decoder.peekStartElement(CCNProtocolDTags.ContentObject)) {  // Content packet
-	if (LOG > 3) console.log('ContentObject received.');
-	
 	var co = new ContentObject();
 	co.from_ccnb(decoder);
-	
+
+	if (LOG > 3) console.log('ContentObject name is ' + co.name.to_uri());
+
 	if (this.ccndid == null && NDN.ccndIdFetcher.match(co.name)) {
 	    // We are in starting phase, record publisherPublicKeyDigest in ccndid
 	    if(!co.signedInfo || !co.signedInfo.publisher 
@@ -280,7 +275,6 @@ NDN.prototype.onReceivedElement = function(element) {
 			if (LOG > 3) console.log("Keylocator contains KEY:\n" + keylocator.publicKey.publicKeyDer.toString('hex'));
 
 			var flag = (co.verify(keylocator.publicKey) == true) ? NDN.CONTENT : NDN.CONTENT_BAD;
-			// Raise callback
 			cl.onData(pitEntry.interest, co, flag);
 		    } else {
 			if (LOG > 3) console.log("KeyLocator does not contain KEY. Leave for user to verify data.");
