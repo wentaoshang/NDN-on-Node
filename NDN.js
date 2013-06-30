@@ -22,7 +22,16 @@ var NDN = function NDN() {
     this.onclose = function () { if (LOG > 3) console.log("NDN connection closed."); };
 
     this.ccndid = null;
-    this.default_key = null;  // Should generate a default key or fetch from default key file upon object construction
+    this.default_key = null;
+};
+
+NDN.prototype.setDefaultKey = function (pubfile, prifile) {
+    this.default_key = new Key();
+    this.default_key.fromPemFile(pubfile, prifile);
+};
+
+NDN.prototype.getDefaultKey = function () {
+    return this.default_key;
 };
 
 exports.NDN = NDN;
@@ -103,8 +112,7 @@ NDN.CONTENT_BAD = 2; // verification failed
  */
 NDN.prototype.expressInterest = function (name, template, onData, onTimeOut) {
     if (this.ready_status != NDN.OPENED) {
-	console.log('Connection is not established.');
-	return;
+	throw new NoNError('NDNError', 'connection is not established.');
     }
 
     var interest = new Interest(name);
@@ -130,7 +138,6 @@ NDN.prototype.expressInterest = function (name, template, onData, onTimeOut) {
 	interest.interestLifetime = 4000;
 	
     if (interest.interestLifetime > 0) {
-	var self = this;
 	pitEntry.timerID = setTimeout(function() {
 		if (LOG > 3) console.log("Interest time out.");
 					
@@ -156,18 +163,15 @@ NDN.prototype.expressInterest = function (name, template, onData, onTimeOut) {
  */
 NDN.prototype.registerPrefix = function(prefix, onInterest) {
     if (this.ready_status != NDN.OPENED) {
-	console.log('Connection is not established.');
-	return;
+	throw new NoNError('NDNError', 'connection is not established.');
     }
 
     if (this.ccndid == null) {
-	console.log('ccnd node ID unkonwn. Cannot register prefix.');
-	return;
+	throw new NoNError('NDNError', 'ccnd node ID unkonwn. Cannot register prefix.');
     }
 
     if (this.default_key == null) {
-	console.log('Cannot register prefix without default key');
-	return;
+	throw new NoNError('NDNError', 'cannot register prefix without default key');
     }
     
     var fe = new ForwardingEntry('selfreg', prefix, null, null, 3, 2147483647);

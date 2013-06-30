@@ -22,7 +22,7 @@
  * Key
  */
 var Key = function Key() {
-    this.certificate = null;
+    this.publicKey = null;
     this.privateKey = null;
 };
 
@@ -30,8 +30,7 @@ exports.Key = Key;
 
 Key.prototype.fromPemFile = function (pub, pri) {
     if (pub == null || pri == null) {
-	console.log('Cannot create Key object without file name.');
-	return;
+	throw new NoNError('KeyError', 'cannot create Key object without file name.');
     }
 
     // Read public key
@@ -56,10 +55,6 @@ Key.prototype.fromPemFile = function (pub, pri) {
 
     var pem = require('fs').readFileSync(pri).toString();
     if (LOG>4) console.log("Content in private key PEM file: \n" + pem);
-
-    var cert_pat = /-----BEGIN\sCERTIFICATE-----[\s\S]*-----END\sCERTIFICATE-----/;
-    this.certificate = cert_pat.exec(pem).toString();
-    if (LOG>4) console.log("Key.certificate: \n" + this.certificate);
 
     var pri_pat = /-----BEGIN\sRSA\sPRIVATE\sKEY-----[\s\S]*-----END\sRSA\sPRIVATE\sKEY-----/;
     this.privateKey = pri_pat.exec(pem).toString();

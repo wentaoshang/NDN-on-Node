@@ -1,7 +1,14 @@
 NDN on Node
 ===========
 
-NDN.JS running on Node.js. This library is implemented in pure JavaScript.
+NDN on Node (NoN) is an NDN library running on Node.js. It is implemented in pure JavaScript. The usage is quite different from the original browser-based NDN.JS library but more similar to PyCCN in that it is used to implement standalone NDN applications.
+
+Major changes from NDN.JS:
+
+* Use TCP rather than WebSocket to connect to local ccnd
+* Use Node.js Buffer object rather than JavaScript ArrayBuffer to hold NDN packets in memory
+* Implement key management interfaces, such as load key from PEM files
+* Use callback-based rather than closure-based NDN event model
 
 Usage
 -----
