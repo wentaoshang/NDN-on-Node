@@ -1,4 +1,4 @@
-NDN-on-Node
+NDN on Node
 ===========
 
 NDN.JS running on Node.js
