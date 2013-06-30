@@ -54,7 +54,7 @@ DataUtils.bigEndianToUnsignedInt = function (/*Buffer*/ bytes) {
  * Convert the int value to a new big endian Buffer and return.
  * If value is 0 or negative, return Buffer(0). 
  */
-DataUtils.nonNegativeIntToBigEndian = function (value) {
+DataUtils.unsignedIntToBigEndian = function (value) {
     value = Math.round(value);
     if (value <= 0)
         return new Buffer(0);

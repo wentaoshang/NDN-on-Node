@@ -215,7 +215,7 @@ BinaryXMLEncoder.prototype.writeDateTime = function (tag, dateTime) {
     if(LOG>4)console.log(dateTime.msec);
     
     //parse to hex
-    var binarydate = DataUtils.nonNegativeIntToBigEndian((dateTime.msec / 1000) * 4096);
+    var binarydate = DataUtils.unsignedIntToBigEndian((dateTime.msec / 1000) * 4096);
     
     if(LOG>4)console.log('ENCODING DATE with BINARY VALUE(HEX):');
     if(LOG>4)console.log(binarydate);
@@ -224,7 +224,7 @@ BinaryXMLEncoder.prototype.writeDateTime = function (tag, dateTime) {
 };
 
 // This does not update this.offset.
-BinaryXMLEncoder.prototype.writeString = function(input) {	
+BinaryXMLEncoder.prototype.writeString = function (input) {	
     if(typeof input === 'string'){
     	if(LOG>4) console.log('GOING TO WRITE A STRING: ' + input);
         

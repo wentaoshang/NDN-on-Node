@@ -115,7 +115,7 @@ Interest.prototype.to_ccnb = function (/*XMLEncoder*/ encoder) {
 		
     if (null != this.interestLifetime) 
 	encoder.writeElement(CCNProtocolDTags.InterestLifetime, 
-			     DataUtils.nonNegativeIntToBigEndian((this.interestLifetime / 1000.0) * 4096));
+			     DataUtils.unsignedIntToBigEndian((this.interestLifetime / 1000.0) * 4096));
 		
     if (null != this.nonce)
 	encoder.writeElement(CCNProtocolDTags.Nonce, this.nonce);
