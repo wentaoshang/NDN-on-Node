@@ -32,10 +32,9 @@ var ContentObject = function ContentObject(_name, _signedInfo, _content, _signat
 
 exports.ContentObject = ContentObject;
 
-ContentObject.prototype.sign = function (/* Key */ key) {
-    if (key == null) {
-	console.log("Cannot sign data without a key :(");
-	return;
+ContentObject.prototype.sign = function (/*Key*/ key) {
+    if (key == null || key.privateKeyPem == null) {
+	throw new NoNError('ConteotObjectError', "cannot sign data without a private key.");
     }
     var n1 = this.encodeObject(this.name);
     var n2 = this.encodeObject(this.signedInfo);
@@ -46,9 +45,19 @@ ContentObject.prototype.sign = function (/* Key */ key) {
     rsa.update(n2);
     rsa.update(n3);
     
-    var sig = new Buffer(rsa.sign(key.privateKey));
+    var sig = new Buffer(rsa.sign(key.privateKeyPem));
 
     this.signature.signature = sig;
+};
+
+ContentObject.prototype.verify = function (/*Key*/ key) {
+    if (key == null || key.publicKeyPem == null) {
+	throw new NoNError('ConteotObjectError', "cannot verify data without a public key.");
+    }
+
+    var verifier = require('crypto').createVerify('RSA-SHA256');
+    verifier.update(this.signedData);
+    return verifier.verify(key.publicKeyPem, this.signature.signature);
 };
 
 ContentObject.prototype.encodeObject = function encodeObject(obj) {
@@ -221,17 +230,17 @@ var SignedInfo = function SignedInfo(_publisher, _timestamp, _type, _locator, _f
 exports.SignedInfo = SignedInfo;
 
 SignedInfo.prototype.setFields = function (/* Key */ key) {
-    var publicKeyBytes = key.publicKey; // Buffer
+    var publicKeyBytes = key.publicKeyDer; // Buffer
     
     var hash = require("crypto").createHash('sha256');
     hash.update(publicKeyBytes);
     var publisherKeyDigest = new Buffer(hash.digest());
-
+    
     this.publisher = new PublisherPublicKeyDigest(publisherKeyDigest);
     
     var d = new Date();
     var time = d.getTime();
-
+    
     this.timestamp = new CCNTime(time);
     
     if(LOG>4)console.log('TIME msec is');
@@ -239,7 +248,7 @@ SignedInfo.prototype.setFields = function (/* Key */ key) {
     
     this.type = ContentType.DATA;  // default
 
-    this.locator = new KeyLocator(publicKeyBytes, KeyLocatorType.KEY);
+    this.locator = new KeyLocator(key, KeyLocatorType.KEY);
 };
 
 SignedInfo.prototype.from_ccnb = function (decoder) {
@@ -272,7 +281,6 @@ SignedInfo.prototype.from_ccnb = function (decoder) {
 	if (null == this.type) {
 	    throw new Error("Cannot parse signedInfo type: bytes.");
 	}
-			
     } else {
 	this.type = ContentType.DATA; // default
     }

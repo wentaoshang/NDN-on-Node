@@ -268,31 +268,18 @@ NDN.prototype.onReceivedElement = function(element) {
 		// Key verification
 		// We only verify the signature when the KeyLocator contains KEY bits
 
-		if (co.signedInfo && co.signedInfo.locator && co.signature) {
-		    var sig = co.signature.signature; // Buffer
-
+		if (co.signedInfo && co.signedInfo.locator && co.signature && co.signature.signature) {
 		    if (co.signature.Witness != null) {
 			// Bypass verification if Witness is present
 			cl.onData(pitEntry.interest, co, NDN.CONTENT_UNVERIFIED);
 			return;
 		    }
-
+		    
 		    var keylocator = co.signedInfo.locator;
 		    if (keylocator.type == KeyLocatorType.KEY) {
-			if (LOG > 3) console.log("Keylocator contains KEY:\n" + keylocator.publicKey.toString('hex'));
-			
-			var keyStr = keylocator.publicKey.toString('base64');
-			var keyPem = "-----BEGIN PUBLIC KEY-----\n";
-			for (var i = 0; i < keyStr.length; i += 64)
-			    keyPem += (keyStr.substr(i, 64) + "\n");
-			keyPem += "-----END PUBLIC KEY-----";
-			if (LOG > 3) console.log("Convert public key to PEM format:\n" + keyPem);
+			if (LOG > 3) console.log("Keylocator contains KEY:\n" + keylocator.publicKey.publicKeyDer.toString('hex'));
 
-			var verifier = require('crypto').createVerify('RSA-SHA256');
-			verifier.update(co.signedData);
-			var verified = verifier.verify(keyPem, sig);
-
-			var flag = (verified == true) ? NDN.CONTENT : NDN.CONTENT_BAD;
+			var flag = (co.verify(keylocator.publicKey) == true) ? NDN.CONTENT : NDN.CONTENT_BAD;
 			// Raise callback
 			cl.onData(pitEntry.interest, co, flag);
 		    } else {

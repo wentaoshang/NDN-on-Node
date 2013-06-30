@@ -22,11 +22,28 @@
  * Key
  */
 var Key = function Key() {
-    this.publicKey = null;
-    this.privateKey = null;
+    this.publicKeyDer = null;  // Buffer
+    this.publicKeyPem = null;  // String
+    this.privateKeyPem = null; // String
 };
 
 exports.Key = Key;
+
+Key.prototype.readDerPublicKey = function (/*Buffer*/pub_der) {
+    if (LOG > 4) console.log("Encode DER public key:\n" + pub_der.toString('hex'));
+
+    this.publicKeyDer = pub_der;
+    
+    var keyStr = pub_der.toString('base64');
+    var keyPem = "-----BEGIN PUBLIC KEY-----\n";
+    for (var i = 0; i < keyStr.length; i += 64)
+	keyPem += (keyStr.substr(i, 64) + "\n");
+    keyPem += "-----END PUBLIC KEY-----";
+
+    this.publicKeyPem = keyPem;
+
+    if (LOG > 4) console.log("Convert public key to PEM format:\n" + this.publicKeyPem);
+};
 
 Key.prototype.fromPemFile = function (pub, pri) {
     if (pub == null || pri == null) {
@@ -40,14 +57,17 @@ Key.prototype.fromPemFile = function (pub, pri) {
 
     var pub_pat = /-----BEGIN\sPUBLIC\sKEY-----[\s\S]*-----END\sPUBLIC\sKEY-----/;
     pubKey = pub_pat.exec(pubpem).toString();
+    this.publicKeyPem = pubKey;
+    if (LOG>4) console.log("Key.publicKeyPem: \n" + this.publicKeyPem);
+
     // Remove the '-----XXX-----' from the beginning and the end of the public key
     // and also remove any \n in the public key string
     var lines = pubKey.split('\n');
     pubKey = "";
     for (var i = 1; i < lines.length - 1; i++)
 	pubKey += lines[i];
-    this.publicKey = new Buffer(pubKey, 'base64');
-    if (LOG>4) console.log("Key.publicKey: \n" + this.publicKey.toString('hex'));
+    this.publicKeyDer = new Buffer(pubKey, 'base64');
+    if (LOG>4) console.log("Key.publicKeyDer: \n" + this.publicKeyDer.toString('hex'));
 
     // Read private key
 
@@ -55,8 +75,8 @@ Key.prototype.fromPemFile = function (pub, pri) {
     if (LOG>4) console.log("Content in private key PEM file: \n" + pem);
 
     var pri_pat = /-----BEGIN\sRSA\sPRIVATE\sKEY-----[\s\S]*-----END\sRSA\sPRIVATE\sKEY-----/;
-    this.privateKey = pri_pat.exec(pem).toString();
-    if (LOG>4) console.log("Key.privateKey: \n" + this.privateKey);
+    this.privateKeyPem = pri_pat.exec(pem).toString();
+    if (LOG>4) console.log("Key.privateKeyPem: \n" + this.privateKeyPem);
 };
 
 /**
@@ -75,15 +95,15 @@ var KeyLocator = function KeyLocator(_input, _type) {
     
     if (_type == KeyLocatorType.KEYNAME) {
     	if (LOG>3) console.log('KeyLocator: Set KEYNAME to ' + _input.to_uri());
-    	this.keyName = _input;
+    	this.keyName = _input;  // Name
     }
     else if (_type == KeyLocatorType.KEY) {
-    	if (LOG>3) console.log('KeyLocator: Set KEY to ' + _input.toString('hex'));
-    	this.publicKey = _input;
+    	if (LOG>3) console.log('KeyLocator: Set KEY to ' + _input.publicKeyPem);
+    	this.publicKey = _input;  // Key
     }
     else if (_type == KeyLocatorType.CERTIFICATE) {
     	if (LOG>3) console.log('KeyLocator: Set CERTIFICATE to ' + input.toString('hex'));
-    	this.certificate = _input;
+    	this.certificate = _input;  // Buffer
     }
 };
 
@@ -97,15 +117,12 @@ KeyLocator.prototype.from_ccnb = function(decoder) {
     if (decoder.peekStartElement(CCNProtocolDTags.Key)) {
 	try {
 	    encodedKey = decoder.readBinaryElement(CCNProtocolDTags.Key);
-	    // This is a DER-encoded SubjectPublicKeyInfo.
-			
-	    //TODO FIX THIS, This should create a Key Object instead of keeping bytes
 
-	    this.publicKey = encodedKey;
+	    this.publicKey = new Key();
+	    this.publicKey.readDerPublicKey(encodedKey);
 	    this.type = KeyLocatorType.KEY;
 	    
-	    if(LOG>4) console.log('PUBLIC KEY FOUND: '+ this.publicKey.toString('hex'));
-	    //this.publicKey = encodedKey;			
+	    if(LOG>4) console.log('Public key in PEM format: '+ this.publicKey.publicKeyPem);
 	} catch (e) {
 	    throw new NoNError('KeyError', "cannot parse key");
 	}
@@ -161,8 +178,8 @@ KeyLocator.prototype.to_ccnb = function (encoder) {
     encoder.writeStartElement(this.getElementLabel());
 	
     if (this.type == KeyLocatorType.KEY) {
-	if(LOG>4)console.log('About to encode a public key:\n' + this.publicKey.toString('hex'));
-	encoder.writeElement(CCNProtocolDTags.Key, this.publicKey);
+	if(LOG>4) console.log('About to encode a public key:\n' + this.publicKey.publicKeyDer.toString('hex'));
+	encoder.writeElement(CCNProtocolDTags.Key, this.publicKey.publicKeyDer);
     } else if (this.type == KeyLocatorType.CERTIFICATE) {
 	try {
 	    encoder.writeElement(CCNProtocolDTags.Certificate, this.certificate);
