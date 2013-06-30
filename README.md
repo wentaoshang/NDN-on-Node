@@ -22,3 +22,4 @@ Build
 To build the 'ndn.js' lib file, simply run the script 'make-js.sh' in ./build folder.
 
    ./make-js.sh
+
