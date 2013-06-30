@@ -29,8 +29,7 @@ MyClosure.prototype.upcall = function(kind, upcallInfo) {
     return Closure.RESULT_OK;
 };
 
-var ndn = new NDN({verify:false});
-//var ndn = new NDN();
+var ndn = new NDN();
 
 ndn.onopen = function () {
     var n = new Name('/wentao.shang/regtest001');

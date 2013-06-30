@@ -39,7 +39,6 @@ ndn.default_key = key;
 
 ndn.onopen = function () {
     var n = new Name('/wentao.shang/regtest001');
-    console.log('Name binary is: ' + n.encodeToBinary().toString('hex'));
     ndn.registerPrefix(n, new MyClosure());
     console.log('Prefix registered.');
 };

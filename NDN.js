@@ -8,26 +8,18 @@
  * Ported to node.js by Wentao Shang
  */
 
-var LOG = 4;
+var LOG = 0;
 
 /**
- * settings is an associative array with the following defaults:
- * {
- *   verify: true
- *   onopen: function() { if (LOG > 3) console.log("NDN connection established."); }
- *   onclose: function() { if (LOG > 3) console.log("NDN connection closed."); }
- * }
- * 
+ * NDN wrapper
  */
-var NDN = function NDN(settings) {
-    settings = (settings || {});
+var NDN = function NDN() {
     this.transport = new TcpTransport(this);
     this.ready_status = NDN.UNOPEN;
-    this.verify = (settings.verify !== undefined ? settings.verify : true);
 
     // Event handler
-    this.onopen = (settings.onopen || function() { if (LOG > 3) console.log("NDN connection established."); });
-    this.onclose = (settings.onclose || function() { if (LOG > 3) console.log("NDN connection closed."); });
+    this.onopen = function () { if (LOG > 3) console.log("NDN connection established."); };
+    this.onclose = function () { if (LOG > 3) console.log("NDN connection closed."); };
 
     this.ccndid = null;
     this.default_key = null;  // Should generate a default key or fetch from default key file upon object construction
@@ -198,7 +190,7 @@ NDN.prototype.registerPrefix = function(prefix, closure, flag) {
     var data = interest.encodeToBinary();
     this.transport.send(data);
 
-    if (LOG > 3) console.log('Interest registration packet sent.');
+    if (LOG > 3) console.log('Prefix registration packet sent.');
 };
 
 /*
@@ -206,11 +198,12 @@ NDN.prototype.registerPrefix = function(prefix, closure, flag) {
  * Look up in the PITTable and call the closure callback.
  */
 NDN.prototype.onReceivedElement = function(element) {
-    if (LOG>3) console.log('Complete element received. Length ' + element.length + '. Start decoding.');
+    if (LOG > 4) console.log('Complete element received. Length ' + element.length + '. Start decoding.');
+    
     var decoder = new BinaryXMLDecoder(element);
     // Dispatch according to packet type
     if (decoder.peekStartElement(CCNProtocolDTags.Interest)) {  // Interest packet
-	if (LOG > 3) console.log('Interest packet received.');
+	if (LOG > 3) console.log('Interest received.');
 	
 	var interest = new Interest();
 	interest.from_ccnb(decoder);
@@ -227,7 +220,7 @@ NDN.prototype.onReceivedElement = function(element) {
 		this.transport.send(info.contentObject.encodeToBinary());
 	}				
     } else if (decoder.peekStartElement(CCNProtocolDTags.ContentObject)) {  // Content packet
-	if (LOG > 3) console.log('ContentObject packet received.');
+	if (LOG > 3) console.log('ContentObject received.');
 	
 	var co = new ContentObject();
 	co.from_ccnb(decoder);
@@ -259,115 +252,46 @@ NDN.prototype.onReceivedElement = function(element) {
 		if (index >= 0)
 		    PITTable.splice(index, 1);
 
-		var currentClosure = pitEntry.closure;
+		var cl = pitEntry.closure;
 		
 		// Cancel interest timer
 		clearTimeout(pitEntry.timerID);
-		//console.log("Clear interest timer");
-		//console.log(currentClosure.timerID);
-
-		// Pass content up without verifying the signature
-		currentClosure.upcall(Closure.UPCALL_CONTENT_UNVERIFIED, new UpcallInfo(this, null, 0, co));
-		return;
-
-		// Currently signature verification is broken.
-		// User should build their own trust management model to verify the data.
-
-/*
-		if (this.verify == false) {
-		    // Pass content up without verifying the signature
-		    currentClosure.upcall(Closure.UPCALL_CONTENT_UNVERIFIED, new UpcallInfo(this, null, 0, co));
-		    return;
-		}
 
 		// Key verification
-
-		// Recursive key fetching & verification closure
-		var KeyFetchClosure = function KeyFetchClosure(co, closure, keyname, sig) {
-		    this.contentObject = co;  // unverified content object
-		    this.closure = closure;  // closure corresponding to the contentObject
-		    this.keyName = keyname;  // name of current key to be fetched
-		    this.sig = sig;  // signature buffer to be verified
-
-		    Closure.call(this);
-		};
-
-                var thisNdn = this;
-		KeyFetchClosure.prototype.upcall = function(kind, upcallInfo) {
-		    if (kind == Closure.UPCALL_INTEREST_TIMED_OUT) {
-			console.log("In KeyFetchClosure.upcall: interest time out.");
-			console.log(this.keyName.contentName.getName());
-		    } else if (kind == Closure.UPCALL_CONTENT) {
-			//console.log("In KeyFetchClosure.upcall: signature verification passed");
-			var keyPem = "-----BEGIN CERTIFICATE-----\n" + upcallInfo.contentObject.content.toString('base64') + "\n-----END CERTIFICATE-----";
-			var verifier = require('crypto').createVerify('RSA-SHA256');
-			verifier.update(this.contentObject.rawSignatureData);
-			var verified = verifier.verify(keyPem, this.sig);
-		        
-			var flag = (verified == true) ? Closure.UPCALL_CONTENT : Closure.UPCALL_CONTENT_BAD;
-			
-			this.closure.upcall(flag, new UpcallInfo(thisNdn, null, 0, this.contentObject));
-		    } else if (kind == Closure.UPCALL_CONTENT_BAD) {
-			console.log("In KeyFetchClosure.upcall: signature verification failed");
-		    }
-		};
+		// We only verify the signature when the KeyLocator contains KEY bits
 
 		if (co.signedInfo && co.signedInfo.locator && co.signature) {
-		    if (LOG > 3) console.log("Key verification...");
 		    var sig = co.signature.signature; // Buffer
 
 		    if (co.signature.Witness != null) {
 			// Bypass verification if Witness is present
-			// Pass content up without verifying the signature
-			currentClosure.upcall(Closure.UPCALL_CONTENT_UNVERIFIED, new UpcallInfo(this, null, 0, co));
+			cl.upcall(Closure.UPCALL_CONTENT_UNVERIFIED, new UpcallInfo(this, null, 0, co));
 			return;
 		    }
 
 		    var keylocator = co.signedInfo.locator;
-		    if (keylocator.type == KeyLocatorType.KEYNAME) {
-			if (LOG > 3) console.log("KeyLocator contains KEYNAME");
-			//var keyname = keylocator.keyName.contentName.getName();
-			//console.log(nameStr);
-			//console.log(keyname);
-
-			if (keylocator.keyName.contentName.match(co.name)) {
-			    if (LOG > 3) console.log("Content is key itself");
-			    
-			    var keyDER = co.signedInfo.locator.publicKey.toString('base64');
-			    var keyPem = "-----BEGIN CERTIFICATE-----\n" + keyDER + "\n-----END CERTIFICATE-----";
-			    var verifier = require('crypto').createVerify('RSA-SHA256');
-			    verifier.update(co.rawSignatureData);
-			    var verified = verifier.verify(keyPem, sig);
-		        
-			    var flag = (verified == true) ? Closure.UPCALL_CONTENT : Closure.UPCALL_CONTENT_BAD;
-			    
-			    currentClosure.upcall(flag, new UpcallInfo(this, null, 0, co));
-			} else {
-			    // Fetch key now
-			    if (LOG > 3) console.log("Fetch key according to keylocator");
-			    var nextClosure = new KeyFetchClosure(co, currentClosure, keylocator.keyName, sig);
-			    this.expressInterest(keylocator.keyName.contentName.getPrefix(4), nextClosure);
-			}
-		    } else if (keylocator.type == KeyLocatorType.KEY) {
-			if (LOG > 3) console.log("Keylocator contains KEY");
+		    if (keylocator.type == KeyLocatorType.KEY) {
+			if (LOG > 3) console.log("Keylocator contains KEY:\n" + keylocator.publicKey.toString('hex'));
 			
-			var keyPem = "-----BEGIN CERTIFICATE-----\n" + co.signedInfo.locator.publicKey.toString('base64') + "\n-----END CERTIFICATE-----";
+			var keyStr = keylocator.publicKey.toString('base64');
+			var keyPem = "-----BEGIN PUBLIC KEY-----\n";
+			for (var i = 0; i < keyStr.length; i += 64)
+			    keyPem += (keyStr.substr(i, 64) + "\n");
+			keyPem += "-----END PUBLIC KEY-----";
+			if (LOG > 3) console.log("Convert public key to PEM format:\n" + keyPem);
+
 			var verifier = require('crypto').createVerify('RSA-SHA256');
 			verifier.update(co.rawSignatureData);
 			var verified = verifier.verify(keyPem, sig);
-		        
+
 			var flag = (verified == true) ? Closure.UPCALL_CONTENT : Closure.UPCALL_CONTENT_BAD;
 			// Raise callback
-			currentClosure.upcall(Closure.UPCALL_CONTENT, new UpcallInfo(this, null, 0, co));
+			cl.upcall(Closure.UPCALL_CONTENT, new UpcallInfo(this, null, 0, co));
 		    } else {
-			var cert = keylocator.certificate;
-			console.log("KeyLocator contains CERT");
-			console.log(cert);
-			
-			// TODO: verify certificate
+			if (LOG > 3) console.log("KeyLocator does not contain KEY. Leave for user to verify data.");
+			cl.upcall(Closure.UPCALL_CONTENT_UNVERIFIED, new UpcallInfo(this, null, 0, co));
 		    }
 		}
-*/
 	    }
 	}
     }
@@ -409,7 +333,7 @@ BinaryXmlElementReader.prototype.onReceivedData = function(/* Buffer */ rawData)
         else {
             // Save for a later call to concatArrays so that we only copy data once.
             this.dataParts.push(rawData);
-	    if (LOG>3) console.log('Incomplete packet received. Length ' + rawData.length + '. Wait for more input.');
+	    if (LOG>4) console.log('Incomplete packet received. Length ' + rawData.length + '. Wait for more input.');
             return;
         }
     }

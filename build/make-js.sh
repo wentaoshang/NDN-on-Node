@@ -17,7 +17,7 @@ cat ../Closure.js \
   ../PublisherID.js \
   ../PublisherPublicKeyDigest.js \
   ../ForwardingEntry.js \
-  ../encoding/DynamicUint8Array.js \
+  ../encoding/DynamicBuffer.js \
   ../encoding/BinaryXMLEncoder.js \
   ../encoding/BinaryXMLDecoder.js \
   ../encoding/BinaryXMLStructureDecoder.js \
