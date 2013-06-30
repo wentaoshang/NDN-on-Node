@@ -58,7 +58,7 @@ Name.prototype.add = function(component){
 
         return this;
     } else 
-	throw new Error("Cannot add Name element at index " + this.components.length + ": Invalid type");
+	throw new NoNError('NameError', "cannot add Name element at index " + this.components.length + ": Invalid type");
     
     this.components.push(result);
     return this;
@@ -147,7 +147,7 @@ Name.prototype.to_ccnb = function(/*XMLEncoder*/ encoder) {
     if (LOG>4) console.log('--------Encoding Name...');
 
     if (this.components == null)
-	throw new Error("CANNOT ENCODE EMPTY CONTENT NAME");
+	throw new NoNError('NameError', "cannot encode empty content name");
 
     encoder.writeStartElement(this.getElementLabel());
     var count = this.components.length;

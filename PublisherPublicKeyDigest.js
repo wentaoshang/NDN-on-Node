@@ -21,7 +21,7 @@ PublisherPublicKeyDigest.prototype.from_ccnb = function (decoder) {
     if(LOG>4) console.log('Publisher public key digest is ' + this.publisherPublicKeyDigest.toString('hex'));
 
     if (null == this.publisherPublicKeyDigest) {
-	throw new Error("Cannot parse publisher key digest.");
+	throw new NoNError('PKDError', "Cannot parse publisher key digest.");
     }
 
     if (this.publisherPublicKeyDigest.length != this.PUBLISHER_ID_LEN) {
@@ -33,7 +33,7 @@ PublisherPublicKeyDigest.prototype.to_ccnb = function (encoder) {
     if (LOG>4) console.log('Encoding PublisherPublicKeyDigest...');
     //TODO Check that the ByteArray for the key is present
     if (!this.validate()) {
-	throw new Error("Cannot encode : field values missing.");
+	throw new NoNError('PKDError', "cannot encode : field values missing.");
     }
     if(LOG>4) console.log('PUBLISHER KEY DIGEST IS ' + this.publisherPublicKeyDigest.toString('hex'));
     encoder.writeElement(this.getElementLabel(), this.publisherPublicKeyDigest);
