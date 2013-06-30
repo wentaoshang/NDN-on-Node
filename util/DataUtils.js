@@ -47,7 +47,7 @@ DataUtils.bigEndianToUnsignedInt = function (/*Buffer*/ bytes) {
 DataUtils.unsignedIntToBigEndian = function (value) {
     value = Math.round(value);
     if (value <= 0)
-        return new Buffer(0);
+        throw new NoNError('DataUtilsError', 'require unsigned int but get negative value.');
     
     var hex = value.toString(16);
     if (hex.length % 2 == 1)
