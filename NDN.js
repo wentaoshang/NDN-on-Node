@@ -281,7 +281,7 @@ NDN.prototype.onReceivedElement = function(element) {
 			if (LOG > 3) console.log("Convert public key to PEM format:\n" + keyPem);
 
 			var verifier = require('crypto').createVerify('RSA-SHA256');
-			verifier.update(co.rawSignatureData);
+			verifier.update(co.signedData);
 			var verified = verifier.verify(keyPem, sig);
 
 			var flag = (verified == true) ? Closure.UPCALL_CONTENT : Closure.UPCALL_CONTENT_BAD;

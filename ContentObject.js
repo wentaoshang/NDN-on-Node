@@ -27,9 +27,7 @@ var ContentObject = function ContentObject(_name, _signedInfo, _content, _signat
 
     this.startSIG = null;
     this.endSIG = null;
-    this.endContent = null;
-	
-    this.rawSignatureData = null;
+    this.signedData = null;
 };
 
 exports.ContentObject = ContentObject;
@@ -65,12 +63,12 @@ ContentObject.prototype.encodeContent = function encodeContent(obj) {
     return enc.getReducedOstream();	
 };
 
-ContentObject.prototype.saveRawData = function (bytes) {
-    var sigBits = bytes.slice(this.startSIG, this.endSIG);
-    this.rawSignatureData = sigBits;
+ContentObject.prototype.saveSignedData = function (bytes) {
+    var sig = bytes.slice(this.startSIG, this.endSIG);
+    this.signedData = sig;
 };
 
-ContentObject.prototype.from_ccnb = function(/*XMLDecoder*/ decoder) {
+ContentObject.prototype.from_ccnb = function (decoder) {
     if (LOG > 4) console.log('--------Start decoding ContentObject...');
 
     decoder.readStartElement(this.getElementLabel());
@@ -84,19 +82,19 @@ ContentObject.prototype.from_ccnb = function(/*XMLDecoder*/ decoder) {
 
     this.name = new Name();
     this.name.from_ccnb(decoder);
-		
+    
     if (decoder.peekStartElement(CCNProtocolDTags.SignedInfo)) {
 	this.signedInfo = new SignedInfo();
 	this.signedInfo.from_ccnb(decoder);
     }
-		
+    
     this.content = decoder.readBinaryElement(CCNProtocolDTags.Content);
 
     this.endSIG = decoder.offset;
-		
+    	
     decoder.readEndElement();
-		
-    this.saveRawData(decoder.istream);
+    
+    this.saveSignedData(decoder.istream);
 
     if (LOG > 4) console.log('--------Finish decoding ContentObject.');
 };
@@ -108,24 +106,22 @@ ContentObject.prototype.to_ccnb = function (encoder) {
 
     if (null != this.signature)
 	this.signature.to_ccnb(encoder);
-	
+    
     this.startSIG = encoder.offset;
     
     if (null != this.name)
 	this.name.to_ccnb(encoder);
-    	
+    
     if (null != this.signedInfo)
 	this.signedInfo.to_ccnb(encoder);
 
     encoder.writeElement(CCNProtocolDTags.Content, this.content);
 
     this.endSIG = encoder.offset;
-	
-    //this.endContent = encoder.offset;
     
     encoder.writeEndElement();
-	
-    this.saveRawData(encoder.ostream);
+    
+    //this.saveSignedData(encoder.ostream);
 
     if (LOG > 4) console.log('--------Finish encoding ContentObject');
 };
