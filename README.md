@@ -26,4 +26,4 @@ More sample codes can be found in ./test folder.
 Build
 -----
 
-To build the 'ndn.js' lib file, simply run the script 'make-js.sh' in ./build folder.
+To build the 'ndn.js' lib file, simply run the script 'make.sh' in ./build folder.
