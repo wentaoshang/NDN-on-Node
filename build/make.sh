@@ -21,6 +21,10 @@ cat ../util/CCNProtocolDTags.js \
   ../util/CCNTime.js \
   ../util/DataUtils.js \
   ../util/NoNError.js \
+  ../util/DynamicBuffer.js \
+  ../util/BinaryXMLEncoder.js \
+  ../util/BinaryXMLDecoder.js \
+  ../util/BinaryXMLStructureDecoder.js \
   ../Name.js \
   ../ContentObject.js \
   ../Interest.js \
@@ -28,10 +32,6 @@ cat ../util/CCNProtocolDTags.js \
   ../PublisherID.js \
   ../PublisherPublicKeyDigest.js \
   ../ForwardingEntry.js \
-  ../encoding/DynamicBuffer.js \
-  ../encoding/BinaryXMLEncoder.js \
-  ../encoding/BinaryXMLDecoder.js \
-  ../encoding/BinaryXMLStructureDecoder.js \
   ../Closure.js \
   ../TcpTransport.js \
   ../NDN.js \

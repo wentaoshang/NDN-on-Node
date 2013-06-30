@@ -50,8 +50,7 @@ BinaryXMLStructureDecoder.prototype.findElementEnd = function(input) {
                         // Finished.
                         return true;
                     if (this.level < 0)
-                        throw new Error("BinaryXMLStructureDecoder: Unexepected close tag at offset " +
-                            (this.offset - 1));
+                        throw new NoNError("BinaryXMLStructureDecoderError", "unexepected close tag at offset " + (this.offset - 1));
                     
                     // Get ready for the next header.
                     this.startHeader();
@@ -92,8 +91,7 @@ BinaryXMLStructureDecoder.prototype.findElementEnd = function(input) {
                 }
                 
                 if (typeAndVal == null)
-                    throw new Error("BinaryXMLStructureDecoder: Can't read header starting at offset " +
-                        (this.offset - this.headerLength));
+                    throw new NoNError("BinaryXMLStructureDecoderError", "can't read header starting at offset " + (this.offset - this.headerLength));
                 
                 // Set the next state based on the type.
                 var type = typeAndVal.t;
@@ -120,7 +118,7 @@ BinaryXMLStructureDecoder.prototype.findElementEnd = function(input) {
                     this.state = BinaryXMLStructureDecoder.READ_BYTES;
                 }
                 else
-                    throw new Error("BinaryXMLStructureDecoder: Unrecognized header type " + type);
+                    throw new NoNError("BinaryXMLStructureDecoderError", "unrecognized header type " + type);
                 break;
             
             case BinaryXMLStructureDecoder.READ_BYTES:
@@ -138,7 +136,7 @@ BinaryXMLStructureDecoder.prototype.findElementEnd = function(input) {
             
             default:
                 // We don't expect this to happen.
-                throw new Error("BinaryXMLStructureDecoder: Unrecognized state " + this.state);
+                throw new NoNError("BinaryXMLStructureDecoderError", "unrecognized state " + this.state);
         }
     }
 };
@@ -146,17 +144,15 @@ BinaryXMLStructureDecoder.prototype.findElementEnd = function(input) {
 /*
  * Set the state to READ_HEADER_OR_CLOSE and set up to start reading the header
  */
-BinaryXMLStructureDecoder.prototype.startHeader = function() {
+BinaryXMLStructureDecoder.prototype.startHeader = function () {
     this.headerLength = 0;
     this.useHeaderBuffer = false;
     this.state = BinaryXMLStructureDecoder.READ_HEADER_OR_CLOSE;    
-}
+};
 
 /*
  *  Set the offset into the input, used for the next read.
  */
-BinaryXMLStructureDecoder.prototype.seek = function(
-        //int
-        offset) {
+BinaryXMLStructureDecoder.prototype.seek = function (offset) {
     this.offset = offset;
-}
+};
