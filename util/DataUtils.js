@@ -42,14 +42,13 @@ DataUtils.bigEndianToUnsignedInt = function (/*Buffer*/ bytes) {
 
 /*
  * Convert the int value to a new big endian Buffer and return.
- * If value is 0 or negative, return Buffer(0). 
+ * Throw Error ff value is negative. 
  */
 DataUtils.unsignedIntToBigEndian = function (value) {
-    value = Math.round(value);
     if (value < 0)
-        throw new NoNError('DataUtilsError', 'require unsigned int but get negative value.');
-    
-    var hex = value.toString(16);
+        throw new NoNError('DataUtilsError', 'require unsigned int but get negative value: ' + value);
+
+    var hex = Math.round(value).toString(16);
     if (hex.length % 2 == 1)
 	hex = '0' + hex;
     
