@@ -52,3 +52,6 @@ co2.from_ccnb(dec2);
 console.log('Decoded name: ' + co2.name.to_uri());
 console.log('Decoded content: ' + co2.content.toString());
 console.log('Content verification passed: ' + co2.verify(key));
+
+console.log('ContentObject in XML representation:');
+console.log(co2.to_xml());

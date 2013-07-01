@@ -170,7 +170,7 @@ Name.prototype.getElementLabel = function(){
 };
 
 // Return the escaped name string according to "CCNx URI Scheme".
-Name.prototype.to_uri = function() {	
+Name.prototype.to_uri = function () {
     if (this.components.length == 0)
         return "/";
     
@@ -180,6 +180,32 @@ Name.prototype.to_uri = function() {
 	result += "/"+ Name.toEscapedString(this.components[i]);
     
     return result;	
+};
+
+
+var is_text_encodable = function (/*Buffer*/ blob) {
+    if (blob.length == 0) return false;
+
+    for (var i = 0; i < blob.length; i++) {
+	var c = blob[i];
+	if (c < 0x20 || c > 0x7E) return false;
+	if (c == 0x3C || c == 0x3E || c == 0x26) return false;
+    }
+    return true;
+};
+
+// Return a string of XML representation of the Name object
+Name.prototype.to_xml = function () {
+    var xml = '<Name>';
+    for(var i = 0; i < this.components.length; i++) {
+	var blob = this.components[i];
+	if (is_text_encodable(blob))
+	    xml += '<Component ccnbencoding="text">' + blob.toString() + '</Component>';
+	else 
+	    xml += '<Component ccnbencoding="hexBinary">' + blob.toString('hex').toUpperCase() + '</Component>';
+    }
+    xml += '</Name>';
+    return xml;
 };
 
 /*

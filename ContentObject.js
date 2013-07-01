@@ -135,6 +135,24 @@ ContentObject.prototype.to_ccnb = function (encoder) {
     if (LOG > 4) console.log('--------Finish encoding ContentObject');
 };
 
+ContentObject.prototype.to_xml = function () {
+    var xml = '<ContentObject>';
+
+    if (null != this.signature)
+	xml += this.signature.to_xml();
+    
+    if (null != this.name)
+	xml += this.name.to_xml();
+    
+    if (null != this.signedInfo)
+	xml += this.signedInfo.to_xml();
+
+    xml += '<Content ccnbencoding="hexBinary">' + this.content.toString('hex').toUpperCase() + '</Content>';
+
+    xml += '</ContentObject>';
+    return xml;
+};
+
 ContentObject.prototype.encodeToBinary = function () {
     var enc = new BinaryXMLEncoder();
     this.to_ccnb(enc);
@@ -187,7 +205,7 @@ Signature.prototype.to_ccnb = function (encoder) {
     }
 	
     encoder.writeStartElement(this.getElementLabel());
-/*
+
     if ((null != this.digestAlgorithm) && (!this.digestAlgorithm.equals(CCNDigestHelper.DEFAULT_DIGEST_ALGORITHM))) {
 	encoder.writeElement(CCNProtocolDTags.DigestAlgorithm, OIDLookup.getDigestOID(this.DigestAlgorithm));
     }
@@ -196,12 +214,21 @@ Signature.prototype.to_ccnb = function (encoder) {
 	// needs to handle null witness
 	encoder.writeElement(CCNProtocolDTags.Witness, this.Witness);
     }
-*/
+
     encoder.writeElement(CCNProtocolDTags.SignatureBits, this.signature);
 
     encoder.writeEndElement();
 
     if (LOG > 4) console.log('--------Finish encoding Signature.');
+};
+
+Signature.prototype.to_xml = function () {
+    var xml = '<Signature>';
+    // Currently we only encode signature bits
+    if (this.signature != null)
+	xml += '<SignatureBits ccnbencoding="hexBinary">' + this.signature.toString('hex').toUpperCase() + '</SignatureBits>';
+    xml += '</Signature>';
+    return xml;
 };
 
 Signature.prototype.getElementLabel = function() { return CCNProtocolDTags.Signature; };
@@ -322,7 +349,7 @@ SignedInfo.prototype.to_ccnb = function (encoder) {
     if (null != this.timestamp) {
 	encoder.writeDateTime(CCNProtocolDTags.Timestamp, this.timestamp);
     }
-    	
+    
     if (null != this.type && this.type != ContentType.DATA) {
 	encoder.writeElement(CCNProtocolDTags.type, this.type);
     }
@@ -344,6 +371,32 @@ SignedInfo.prototype.to_ccnb = function (encoder) {
     if (LOG > 4) console.log('--------Finish encoding SignedInfo.');
 };
 
+SignedInfo.prototype.to_xml = function () {
+    var xml = '<SignedInfo>';
+
+    if (null != this.publisher)
+	xml += this.publisher.to_xml();
+
+    if (null != this.timestamp)
+	xml += '<Timestamp ccnbencoding="hexBinary">' 
+	    + DataUtils.unsignedIntToBigEndian((this.timestamp.msec / 1000) * 4096).toString('hex').toUpperCase()
+	    + '</Timestamp>';
+
+    if (null != this.type && this.type != ContentType.DATA)
+	throw new NoNError('SignedInfoError', "don't know how to encode ContentType to XML.");
+    
+    if (null != this.freshnessSeconds)
+	xml += '<FreshnessSeconds>' + this.freshnessSeconds + '</FreshnessSeconds>';
+
+    if (null != this.finalBlockID)
+	xml += '<FinalBlockID ccnbencoding="hexBinary">' + this.finalBlockID.toString('hex').toUpperCase() + '</FinalBlockID>'
+
+    if (null != this.locator)
+	xml += this.locator.to_xml();
+
+    xml += '</SignedInfo>';
+    return xml;
+};
 
 SignedInfo.prototype.getElementLabel = function () { 
     return CCNProtocolDTags.SignedInfo;

@@ -8,6 +8,8 @@ var onData = function (interest, co, status) {
 	console.log("ContentObject received in callback.");
 	console.log('Name: ' + co.name.to_uri());
 	console.log('Content: ' + co.content.toString());
+	console.log('ContentObject in XML representation:');
+	console.log(co.to_xml());
     } else if (status == NDN.CONTENT_BAD) {
 	console.log("Verification failed.");
     }
@@ -26,7 +28,7 @@ var ndn = new NDN();
 ndn.onopen = function () {
     var n = new Name('/wentao.shang/regtest001');
     var template = new Interest();
-    template.answerOriginKind = 0;
+    template.answerOriginKind = Interest.ANSWER_NO_CONTENT_STORE;  // bypass cache in ccnd
     template.interestLifetime = 4000;
     ndn.expressInterest(n, template, onData, onTimeout);
     console.log('Interest expressed.');

@@ -194,6 +194,19 @@ KeyLocator.prototype.to_ccnb = function (encoder) {
     if (LOG>4) console.log('--------Finish encoding KeyLocator.');
 };
 
+KeyLocator.prototype.to_xml = function () {
+    var xml = '<KeyLocator>';
+    if (this.type == KeyLocatorType.KEY) {
+	xml += '<Key ccnbencoding="hexBinary">' + this.publicKey.publicKeyDer.toString('hex').toUpperCase() + '</Key>';
+    } else if (this.type == KeyLocatorType.CERTIFICATE) {
+	throw new NoNError('KeyError', "don't know how to encode certificate into XML.");
+    } else if (this.type == KeyLocatorType.KEYNAME) {
+	xml += this.keyName.to_xml();
+    }
+    xml += '</KeyLocator>';
+    return xml;
+};
+
 KeyLocator.prototype.getElementLabel = function() {
     return CCNProtocolDTags.KeyLocator;
 };
@@ -246,6 +259,15 @@ KeyName.prototype.to_ccnb = function (encoder) {
     encoder.writeEndElement();
 
     if (LOG>4) console.log('Finish encoding KeyName.');
+};
+
+KeyName.prototype.to_xml = function () {
+    var xml = '<KeyName>';
+    // Currently we only encode Name in the KeyName
+    if (this.contentName != null)
+	xml += this.contentName.to_xml();
+    xml += '</KeyName>';
+    return xml;
 };
 	
 KeyName.prototype.getElementLabel = function () { return CCNProtocolDTags.KeyName; };

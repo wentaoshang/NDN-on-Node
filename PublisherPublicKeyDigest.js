@@ -40,6 +40,14 @@ PublisherPublicKeyDigest.prototype.to_ccnb = function (encoder) {
     if(LOG>4) console.log('Finish encoding PublisherPublicKeyDigest.');
 };
 
+PublisherPublicKeyDigest.prototype.to_xml = function () {
+    var xml = '<PublisherPublicKeyDigest ccnbencoding="hexBinary">';
+    if (this.publisherPublicKeyDigest != null)
+	xml += this.publisherPublicKeyDigest.toString('hex').toUpperCase();
+    xml += '</PublisherPublicKeyDigest>';
+    return xml;
+};
+
 PublisherPublicKeyDigest.prototype.getElementLabel = function () { return CCNProtocolDTags.PublisherPublicKeyDigest; };
 
 PublisherPublicKeyDigest.prototype.validate = function () {
