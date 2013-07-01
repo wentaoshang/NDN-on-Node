@@ -15,26 +15,26 @@ then
     rm non.pub
 fi
 
-echo 'Building ndn.js lib file...'
+echo 'Building "ndn.js" lib file...'
 
-cat ../util/CCNProtocolDTags.js \
-  ../util/CCNTime.js \
-  ../util/DataUtils.js \
-  ../util/NoNError.js \
-  ../util/DynamicBuffer.js \
-  ../util/BinaryXMLEncoder.js \
-  ../util/BinaryXMLDecoder.js \
-  ../util/BinaryXMLStructureDecoder.js \
-  ../Name.js \
-  ../ContentObject.js \
-  ../Interest.js \
-  ../Key.js \
-  ../PublisherID.js \
-  ../PublisherPublicKeyDigest.js \
-  ../ForwardingEntry.js \
-  ../Closure.js \
-  ../TcpTransport.js \
-  ../NDN.js \
+cat ../lib/util/CCNProtocolDTags.js \
+  ../lib/util/CCNTime.js \
+  ../lib/util/DataUtils.js \
+  ../lib/util/NoNError.js \
+  ../lib/util/DynamicBuffer.js \
+  ../lib/util/BinaryXMLEncoder.js \
+  ../lib/util/BinaryXMLDecoder.js \
+  ../lib/util/BinaryXMLStructureDecoder.js \
+  ../lib/Name.js \
+  ../lib/ContentObject.js \
+  ../lib/Interest.js \
+  ../lib/Key.js \
+  ../lib/PublisherID.js \
+  ../lib/PublisherPublicKeyDigest.js \
+  ../lib/ForwardingEntry.js \
+  ../lib/Closure.js \
+  ../lib/TcpTransport.js \
+  ../lib/NDN.js \
   > ndn.js
 
 echo '...done'

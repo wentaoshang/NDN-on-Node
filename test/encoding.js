@@ -53,5 +53,7 @@ console.log('Decoded name: ' + co2.name.to_uri());
 console.log('Decoded content: ' + co2.content.toString());
 console.log('Content verification passed: ' + co2.verify(key));
 
-console.log('ContentObject in XML representation:');
+console.log('ContentObject in XML representation (hex):');
 console.log(co2.to_xml());
+console.log('ContentObject in XML representation (base64):');
+console.log(co2.to_xml('base64'));
