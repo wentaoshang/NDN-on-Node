@@ -88,43 +88,83 @@ Interest.prototype.from_ccnb = function (/*XMLDecoder*/ decoder) {
 
 Interest.prototype.to_ccnb = function (/*XMLEncoder*/ encoder) {
     if (LOG>4) console.log('--------Encoding Interest....');
-
+    
     encoder.writeStartElement(CCNProtocolDTags.Interest);
-
+    
     if (null != this.name)
 	this.name.to_ccnb(encoder);
-	
+    
     if (null != this.minSuffixComponents) 
 	encoder.writeElement(CCNProtocolDTags.MinSuffixComponents, this.minSuffixComponents);	
-
+    
     if (null != this.maxSuffixComponents) 
 	encoder.writeElement(CCNProtocolDTags.MaxSuffixComponents, this.maxSuffixComponents);
-
+    
     if (null != this.publisherPublicKeyDigest)
 	this.publisherPublicKeyDigest.to_ccnb(encoder);
-		
+    
     if (null != this.exclude)
 	this.exclude.to_ccnb(encoder);
-		
+    
     if (null != this.childSelector) 
 	encoder.writeElement(CCNProtocolDTags.ChildSelector, this.childSelector);
-
+    
     if (this.DEFAULT_ANSWER_ORIGIN_KIND != this.answerOriginKind && this.answerOriginKind!=null) 
 	encoder.writeElement(CCNProtocolDTags.AnswerOriginKind, this.answerOriginKind);
-		
+    
     if (null != this.scope) 
 	encoder.writeElement(CCNProtocolDTags.Scope, this.scope);
-		
+    
     if (null != this.interestLifetime) 
 	encoder.writeElement(CCNProtocolDTags.InterestLifetime, 
 			     DataUtils.unsignedIntToBigEndian((this.interestLifetime / 1000.0) * 4096));
-		
+    
     if (null != this.nonce)
 	encoder.writeElement(CCNProtocolDTags.Nonce, this.nonce);
-		
+    
     encoder.writeEndElement();
-
+    
     if (LOG>4) console.log('--------Finish encoding Interest.');
+};
+
+Interest.prototype.to_xml = function () {
+    var xml = '<Interest>';
+
+    if (null != this.name)
+	xml += this.name.to_xml();
+	
+    if (null != this.minSuffixComponents) 
+	xml += '<MinSuffixComponents>' + this.minSuffixComponents + '</MinSuffixComponents>';
+
+    if (null != this.maxSuffixComponents) 
+	xml += '<MaxSuffixComponents>' + this.maxSuffixComponents + '</MaxSuffixComponents>';
+
+    if (null != this.publisherPublicKeyDigest)
+	xml += this.publisherPublicKeyDigest.to_xml();
+		
+    if (null != this.exclude)
+	throw new NoNError('InterestError', "don't know how to encode Exclude into XML.");
+		
+    if (null != this.childSelector)
+	xml += '<ChildSelector>' + this.childSelector + '</ChildSelector>';
+
+    if (this.DEFAULT_ANSWER_ORIGIN_KIND != this.answerOriginKind && this.answerOriginKind!=null) 
+	xml += '<AnswerOriginKind>' + this.answerOriginKind + '</AnswerOriginKind>';
+		
+    if (null != this.scope) 
+	xml += '<Scope>' + this.scope + '</Scope>';
+		
+    if (null != this.interestLifetime)
+	xml += '<InterestLifetime ccnbencoding="hexBinary">' 
+	    + DataUtils.unsignedIntToBigEndian((this.interestLifetime / 1000.0) * 4096).toString('hex').toUpperCase()
+	    + '</InterestLifetime>';
+    
+    if (null != this.nonce)
+	xml += '<Nonce ccnbencoding="hexBinary">' + this.nonce.toString('hex').toUpperCase() + '</Nonce>';
+    
+    xml += '</Interest>';
+
+    return xml;
 };
 
 
