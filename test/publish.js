@@ -19,7 +19,11 @@ var onInterest = function (interest) {
     var co = new ContentObject(interest.name, si, 'NDN on Node\n', new Signature());
     co.sign(mykey);
 
-    ndn.send(co.encodeToBinary());
+    try {
+	ndn.send(co);
+    } catch (e) {
+	console.log(e.toString());
+    }
 };
 
 var ndn = new NDN();

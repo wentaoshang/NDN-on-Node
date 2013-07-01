@@ -21,6 +21,8 @@ var onData = function (interest, co, status) {
 var onTimeout = function (interest) {
     console.log("Interest time out.");
     console.log('Interest name: ' + interest.name.to_uri());
+    console.log('Quit script now.');
+    ndn.close();
 };
 
 var ndn = new NDN();
