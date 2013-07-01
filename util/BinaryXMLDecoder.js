@@ -53,28 +53,13 @@ BinaryXMLDecoder.prototype.readStartElement = function (startTag) {
     
     var decodedTag = null;
 			
-    //console.log(XML_TAG);
     if (tv.type() == XML_TAG) {
 	// Tag value represents length-1 as tags can never be empty.
-	var valval ;
-	if(typeof tv.val() == 'string'){
-	    valval = (parseInt(tv.val())) + 1;
-	}
-	else
-	    valval = (tv.val())+ 1;
-				
-	//console.log('valval is ' + valval);
-				
-	decodedTag = this.decodeUString(valval);
+	decodedTag = this.decodeUString(tv.val());
     } else if (tv.type() == XML_DTAG) {
-	//console.log(tv.val());
-	//decodedTag = tagToString(tv.val());
 	decodedTag = tv.val();
     }
     
-    //console.log(decodedTag);
-    //console.log('startTag is '+ startTag);
-    		
     if ((null ==  decodedTag) || decodedTag != startTag ) {
 	throw new NoNError('DecodeError', "expecting start element " + startTag + " but got " + decodedTag + "(" + tv.val() + ")");
     }
@@ -95,16 +80,7 @@ BinaryXMLDecoder.prototype.peekStartElementAsString = function () {
 		if (tv.val()+1 > CCNB_DECODE_MAX_LEN) {
 		    throw new NoNError("DecodeError", "length " + (tv.val() + 1) + " longer than expected maximum length.");
 		}
-
-		// Tag value represents length-1 as tags can never be empty.
-		var valval ;
-		if(typeof tv.val() == 'string'){
-		    valval = (parseInt(tv.val())) + 1;
-		}
-		else
-		    valval = (tv.val())+ 1;
-				
-		decodedTag = this.decodeUString(valval);
+		decodedTag = this.decodeUString(tv.val());
 	    } else if (tv.type() == XML_DTAG) {
 		decodedTag = tagToString(tv.val());					
 	    }
@@ -117,15 +93,14 @@ BinaryXMLDecoder.prototype.peekStartElementAsString = function () {
 };
 
 BinaryXMLDecoder.prototype.peekStartElement = function (startTag) {
-    if(typeof startTag == 'string'){
+    if (typeof startTag == 'string') {
 	var decodedTag = this.peekStartElementAsString();
-		
+	
 	if ((null !=  decodedTag) && decodedTag == startTag) {
 	    return true;
 	}
 	return false;
-    }
-    else if(typeof startTag == 'number'){
+    } else if (typeof startTag == 'number') {
 	var decodedTag = this.peekStartElementAsLong();
 	if ((null !=  decodedTag) && decodedTag == startTag) {
 	    return true;
@@ -139,7 +114,6 @@ BinaryXMLDecoder.prototype.peekStartElement = function (startTag) {
 
 BinaryXMLDecoder.prototype.peekStartElementAsLong = function () {
     var decodedTag = null;
-		
     var previousOffset = this.offset;
 		
     try {
@@ -153,20 +127,11 @@ BinaryXMLDecoder.prototype.peekStartElementAsLong = function () {
 		if (tv.val()+1 > CCNB_DECODE_MAX_LEN) {
 		    throw new NoNError('DecodeError', "length " + (tv.val() + 1) + " longer than expected maximum length!");
 		}
-
-		var valval ;
-		if(typeof tv.val() == 'string'){
-		    valval = (parseInt(tv.val())) + 1;
-		}
-		else
-		    valval = (tv.val())+ 1;
-					
 		// Tag value represents length-1 as tags can never be empty.
-		var strTag = this.decodeUString(valval);
-					
+		var strTag = this.decodeUString(tv.val());
 		decodedTag = stringToTag(strTag);
 	    } else if (tv.type() == XML_DTAG) {
-		decodedTag = tv.val();					
+		decodedTag = tv.val();		
 	    }
 	} // else, not a type and val, probably an end element. rewind and return false.
     }
@@ -246,7 +211,7 @@ BinaryXMLDecoder.prototype.decodeTypeAndVal = function() {
     var more = true;
 
     do {	
-	var next = this.istream[this.offset ];
+	var next = this.istream[this.offset];
 		
 	if (next < 0) {
 	    return null; 
@@ -294,17 +259,10 @@ BinaryXMLDecoder.peekTypeAndVal = function() {
 BinaryXMLDecoder.prototype.decodeBlob = function (blobLength) {
     if (null == blobLength) {
 	var tv = this.decodeTypeAndVal();
-	var valval;
-		
-	if (typeof tv.val() == 'string')
-	    valval = (parseInt(tv.val()));
-	else
-	    valval = (tv.val());
-
-	return  this.decodeBlob(valval);
+	blobLength = tv.val();
     }
     
-    var bytes = this.istream.slice(this.offset, this.offset+ blobLength);
+    var bytes = this.istream.slice(this.offset, this.offset + blobLength);
     this.offset += blobLength;
 	
     return bytes;
@@ -324,19 +282,18 @@ BinaryXMLDecoder.prototype.decodeUString = function (byteLength) {
 	    return "";
 	}
 			
-	return this.decodeUString(tv.val());
+	byteLength = tv.val();
     }
-    else{ 
-	var stringBytes = this.decodeBlob(byteLength);
-	return  stringBytes.toString();
-    }
+
+    var stringBytes = this.decodeBlob(byteLength);
+    return stringBytes.toString();
 };
 
 
 //OBject containg a pair of type and value
 var TypeAndVal = function TypeAndVal(_type, _val) {
-    this.t = _type;
-    this.v = _val;
+    this.t = _type; // byte
+    this.v = _val;  // byte
 };
 
 TypeAndVal.prototype.type = function () {
