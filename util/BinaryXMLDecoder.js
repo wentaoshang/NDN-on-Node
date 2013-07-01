@@ -274,8 +274,6 @@ BinaryXMLDecoder.prototype.decodeUString = function (byteLength) {
 	var tempStreamPosition = this.offset;
 	
 	var tv = this.decodeTypeAndVal();
-		
-	if(LOG>4) console.log('Type of TV is '+typeof tv);
 	
 	if ((null == tv) || (XML_UDATA != tv.type())) { // if we just have closers left, will get back null
 	    this.offset = tempStreamPosition;

@@ -76,35 +76,27 @@ BinaryXMLEncoder.prototype.writeEndElement = function() {
 };
 
 
-/*
- * If Content is a string, then encode as utf8 and write UDATA.
- */
-BinaryXMLEncoder.prototype.writeElement = function(tag, Content) {
+BinaryXMLEncoder.prototype.writeElement = function(tag, data) {
     this.writeStartElement(tag);
-    // Will omit if 0-length
     
-    if(typeof Content === 'number') {
-	if(LOG>4) console.log('GOING TO WRITE THE NUMBER .charCodeAt(0) ' + Content.toString().charCodeAt(0) );
-	if(LOG>4) console.log('GOING TO WRITE THE NUMBER ' + Content.toString() );
-	//if(LOG>4) console.log('type of number is ' + typeof Content );
+    if (typeof data == 'number') {
+	// Encode non-negative integer as decimal string
+	if(LOG>4) console.log('Going to write a number ' + data);
 	
-	this.writeUString(Content.toString());
+	this.writeUString(data.toString());
     }
-    else if(typeof Content === 'string'){
-	if(LOG>4) console.log('GOING TO WRITE THE STRING ' + Content );
-	//if(LOG>4) console.log('type of STRING is ' + typeof Content );
+    else if (typeof data == 'string') {
+	if(LOG>4) console.log('Going to write a string ' + data);
 	
-	this.writeUString(Content);
+	this.writeUString(data);
     } else {
-	if(LOG>4) console.log('GOING TO WRITE A BLOB ' + Content.toString('hex') );
-	//if(LOG>4) console.log('type of BLOB is ' + typeof Content );
+	if(LOG>4) console.log('Going to write a blob ' + data.toString('hex') );
 
-	this.writeBlob(Content);
+	this.writeBlob(data);
     }
-	
+    
     this.writeEndElement();
 };
-
 
 
 var TypeAndVal = function TypeAndVal(_type, _val) {
@@ -127,19 +119,17 @@ BinaryXMLEncoder.prototype.encodeTypeAndVal = function (type, val) {
 
     // Bottom 4 bits of val go in last byte with tag.
     this.ostream.array[this.offset + numEncodingBytes - 1] = 
-    //(byte)
     (BYTE_MASK &
      (((XML_TT_MASK & type) | 
        ((XML_TT_VAL_MASK & val) << XML_TT_BITS))) |
      XML_TT_NO_MORE); // set top bit for last byte
     val = val >>> XML_TT_VAL_BITS;
-	
+    
     // Rest of val goes into preceding bytes, 7 bits per byte, top bit
     // is "more" flag.
     var i = this.offset + numEncodingBytes - 2;
     while ((0 != val) && (i >= this.offset)) {
-	this.ostream.array[i] = //(byte)
-	    (BYTE_MASK & (val & XML_REG_VAL_MASK)); // leave top bit unset
+	this.ostream.array[i] = (BYTE_MASK & (val & XML_REG_VAL_MASK)); // leave top bit unset
 	val = val >>> XML_REG_VAL_BITS;
 	--i;
     }
@@ -151,14 +141,13 @@ BinaryXMLEncoder.prototype.encodeTypeAndVal = function (type, val) {
     return numEncodingBytes;
 };
 
-/*
- * Encode ustring as utf8.
- */
+
 BinaryXMLEncoder.prototype.encodeUString = function (ustring, type) {
     if (null == ustring)
-	return;
+	throw new NoNError('EncodeError', 'cannot encode null string.');
+
     if (type == XML_TAG || type == XML_ATTR && ustring.length == 0)
-	return;
+	throw new NoNError('EncodeError', 'cannot encode empty string');
     
     if(LOG>4) console.log("The string to write is: " + ustring);
 
@@ -179,9 +168,9 @@ BinaryXMLEncoder.prototype.encodeUString = function (ustring, type) {
 
 BinaryXMLEncoder.prototype.encodeBlob = function (blob, length) {
     if (null == blob)
-	return;
+	throw new NoNError('EncodeError', 'cannot encode null blob.');
     
-    if(LOG>4) console.log('LENGTH OF XML_BLOB IS ' + length);
+    if(LOG>4) console.log('Length of blob is ' + length);
 
     this.encodeTypeAndVal(XML_BLOB, length);
 
@@ -226,16 +215,13 @@ BinaryXMLEncoder.prototype.writeDateTime = function (tag, dateTime) {
 // This does not update this.offset.
 BinaryXMLEncoder.prototype.writeString = function (input) {	
     if(typeof input === 'string'){
-    	if(LOG>4) console.log('GOING TO WRITE A STRING: ' + input);
+    	if(LOG>4) console.log('Going to write a string: ' + input);
         
         this.ostream.ensureLength(this.offset + input.length);
-	for (var i = 0; i < input.length; i++) {
-	    if(LOG>4) console.log('input.charCodeAt(i)=' + input.charCodeAt(i));
-	    this.ostream.array[this.offset + i] = (input.charCodeAt(i));
-	}
+	this.writeBlobArray(new Buffer(input, 'ascii'));
     }
     else{
-	if(LOG>4) console.log('GOING TO WRITE A STRING IN BINARY FORM: ');
+	if(LOG>4) console.log('Going to write a string in binary form: ');
 	if(LOG>4) console.log(input);
 	
 	this.writeBlobArray(input);
