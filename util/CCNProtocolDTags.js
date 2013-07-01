@@ -150,7 +150,3 @@ var CCNProtocolDTagsStrings = [
     "SyncVersion", "SyncNodeElements", "SyncContentHash", "SyncLeafCount", "SyncTreeDepth", "SyncByteCount",
     "ConfigSlice", "ConfigSliceList", "ConfigSliceOp" ];
 
-
-//TESTING
-//console.log(exports.CCNProtocolDTagsStrings[17]);
-
