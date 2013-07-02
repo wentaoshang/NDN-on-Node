@@ -1,7 +1,6 @@
 var NDN = require('../build/ndn.js').NDN;
 var Name = require('../build/ndn.js').Name;
 var Interest = require('../build/ndn.js').Interest;
-var ContentObject = require('../build/ndn.js').ContentObject;
 
 var onData = function (interest, co, status) {
     if (status == NDN.CONTENT || status == NDN.CONTENT_UNVERIFIED) {

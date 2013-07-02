@@ -4,8 +4,6 @@ var Name = require('../build/ndn.js').Name;
 var Interest = require('../build/ndn.js').Interest;
 var ContentObject = require('../build/ndn.js').ContentObject;
 var Key = require('../build/ndn.js').Key;
-var SignedInfo = require('../build/ndn.js').SignedInfo;
-var Signature = require('../build/ndn.js').Signature;
 
 var n = new Name('/a/b/c.txt');
 
@@ -34,10 +32,7 @@ var content = "NDN on Node";
 var key = new Key();
 key.fromPemFile('./non.pub', './non.pem');
 
-var si = new SignedInfo();
-si.setFields(key);
-
-var co1 = new ContentObject(new Name(n), si, content, new Signature());
+var co1 = new ContentObject(new Name(n), content);
 co1.sign(key)
 console.log("Signature is \n" + co1.signature.signature.toString('hex'));
 
