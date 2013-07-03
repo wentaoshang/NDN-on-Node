@@ -26,3 +26,15 @@ console.log(n1.to_uri());
 console.log('XML representation:');
 console.log(n1.to_xml());
 
+console.log("----------------------");
+var n2 = new NoN.Name('/a/b/c.txt/');
+console.log("Original name:");
+console.log(n2.to_uri());
+var n3 = new NoN.Name(n2);
+console.log("Make a copy:");
+console.log(n3.to_uri());
+n3.appendVersion().appendSegment(0);
+console.log("Make some change:")
+console.log(n3.to_uri());
+console.log("Original name:");
+console.log(n2.to_uri());
