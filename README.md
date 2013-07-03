@@ -1,7 +1,7 @@
 NDN on Node
 ===========
 
-NDN on Node (NoN) is an NDN library running on Node.js. It is implemented in pure JavaScript. The usage is quite different from the original browser-based NDN.JS library but more similar to PyCCN in that it is used to implement standalone NDN applications.
+NDN on Node (NoN) is an NDN library running on Node.js. The usage is quite different from the original browser-based NDN.JS library but more similar to PyCCN in that it is used to implement standalone NDN applications. It features a pure JavaScript implementation with no dependency on CCNx C library (which is true for PyCCN and ndn.cxx C++ library).
 
 Major changes from NDN.JS:
 
@@ -9,6 +9,7 @@ Major changes from NDN.JS:
 * Use Node.js Buffer object rather than JavaScript ArrayBuffer to hold NDN packets in memory
 * Implement key management interfaces, such as load key from PEM files
 * Use callback-based rather than closure-based NDN event model
+* Significant code cleanup and refactoring
 
 Usage
 -----
@@ -21,7 +22,7 @@ For example:
     var ndn = new NDN();
     ndn.connect();
 
-More sample codes can be found in ./test folder.
+More sample codes can be found in ./sample folder.
 
 Build
 -----
