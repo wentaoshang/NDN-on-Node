@@ -40,9 +40,7 @@ var enc2 = new Encoder();
 co1.to_ccnb(enc2);
 var p2 = enc2.getReducedOstream();
 
-var dec2 = new Decoder(p2);
-var co2 = new ContentObject();
-co2.from_ccnb(dec2);
+var co2 = ContentObject.parse(p2);
 
 console.log('Decoded name: ' + co2.name.to_uri());
 console.log('Decoded content: ' + co2.content.toString());
