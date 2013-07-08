@@ -14,17 +14,16 @@ Major changes from NDN.JS:
 Usage
 -----
 
-To use this library, put ./build/ndn.js in your project folder and 'require' that file in your code.
+To use this library, install NDN-on-Node in your project folder via 
+
+   npm install ndn-on-node
+
+and then 'require' the library in your code.
 
 For example:
 
-    var NDN = require('./ndn.js').NDN;
+    var NDN = require('nnd-on-node').NDN;
     var ndn = new NDN();
     ndn.connect();
 
 More sample codes can be found in ./sample folder.
-
-Build
------
-
-To build the 'ndn.js' lib file, simply run the script 'make.sh' in ./build folder.
