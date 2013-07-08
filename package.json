@@ -1,6 +1,6 @@
 {
   "name": "ndn-on-node",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "author": "Wentao Shang <wentao@cs.ucla.edu>",
   "description": "NDN client library for Node.js",
   "keywords": [ "NDN" ],
