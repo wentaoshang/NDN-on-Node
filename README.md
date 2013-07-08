@@ -29,7 +29,7 @@ For example:
 
 If you don't publish data, you don't need to set default key for the NDN object. Otherwise, you need to call NDN.setDefaultKey(), which takes two parameters indicating the PEM-encoded public & private key file names. These files can be generated using the following OPENSSL commands:
 
-   openssl genrsa -out non.pem 1024
-   openssl rsa -in non.pem -pubout > non.pub
+    openssl genrsa -out non.pem 1024
+    openssl rsa -in non.pem -pubout > non.pub
 
 More sample codes can be found in ./sample folder.
