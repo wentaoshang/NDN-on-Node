@@ -1,9 +1,9 @@
-var Encoder = require('../build/ndn.js').CcnbEncoder;
-var Decoder = require('../build/ndn.js').CcnbDecoder;
-var Name = require('../build/ndn.js').Name;
-var Interest = require('../build/ndn.js').Interest;
-var ContentObject = require('../build/ndn.js').ContentObject;
-var Key = require('../build/ndn.js').Key;
+var Encoder = require('../index.js').BinaryXMLEncoder;
+var Decoder = require('../index.js').BinaryXMLDecoder;
+var Name = require('../index.js').Name;
+var Interest = require('../index.js').Interest;
+var ContentObject = require('../index.js').ContentObject;
+var Key = require('../index.js').Key;
 
 var n = new Name('/a/b/c.txt');
 

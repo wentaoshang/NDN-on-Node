@@ -1,4 +1,4 @@
-var NDN = require('../build/ndn.js').NDN;
+var NDN = require('../index.js').NDN;
 
 var ndn = new NDN();
 

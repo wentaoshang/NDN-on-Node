@@ -1,4 +1,4 @@
-var NoN = require('../build/ndn.js');
+var NoN = require('../index.js');
 
 var n = new NoN.Name('/wentao.shang/test001');
 var i = new NoN.Interest(n);

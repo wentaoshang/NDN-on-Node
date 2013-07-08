@@ -1,0 +1,16 @@
+{
+  "name": "ndn-on-node",
+  "version": "0.0.2",
+  "author": "Wentao Shang <wentao@cs.ucla.edu>",
+  "description": "NDN client library for Node.js",
+  "keywords": [ "NDN" ],
+  "homepage": "http://github.com/wentaoshang/NDN-on-Node",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wentaoshang/NDN-on-Node.git"
+  },
+  "main": "index.js",
+  "engines": {
+    "node": ">= 0.5.0"
+  }
+}
