@@ -11,15 +11,25 @@ Major changes from NDN.JS:
 * Use callback-based rather than closure-based NDN event model
 * Significant code cleanup and refactoring
 
+Install
+-------
+
+NDN-on-Node is available on npm. Simply run 'npm install ndn-on-node' under your project folder to install the library.
+
 Usage
 -----
 
-To use this library, install NDN-on-Node in your project folder via 'npm install ndn-on-node' and then 'require' the library in your code.
+To use this library, add "require('ndn-on-node')" in your code.
 
 For example:
 
     var NDN = require('ndn-on-node').NDN;
     var ndn = new NDN();
     ndn.connect();
+
+If you don't publish data, you don't need to set default key for the NDN object. Otherwise, you need to call NDN.setDefaultKey(), which takes two parameters indicating the PEM-encoded public & private key file names. These files can be generated using the following OPENSSL commands:
+
+   openssl genrsa -out non.pem 1024
+   openssl rsa -in non.pem -pubout > non.pub
 
 More sample codes can be found in ./sample folder.
