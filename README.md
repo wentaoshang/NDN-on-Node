@@ -14,15 +14,11 @@ Major changes from NDN.JS:
 Usage
 -----
 
-To use this library, install NDN-on-Node in your project folder via 
-
-   npm install ndn-on-node
-
-and then 'require' the library in your code.
+To use this library, install NDN-on-Node in your project folder via 'npm install ndn-on-node' and then 'require' the library in your code.
 
 For example:
 
-    var NDN = require('nnd-on-node').NDN;
+    var NDN = require('ndn-on-node').NDN;
     var ndn = new NDN();
     ndn.connect();
 
