@@ -1,4 +1,4 @@
-var non = require("../index.js");
+var non = require("../");
 
 var name = new non.Name("/%C1.M.S.localhost/%C1.M.SRV/ccnd/KEY");
 

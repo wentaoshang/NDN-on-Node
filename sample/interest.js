@@ -1,8 +1,8 @@
-var NoN = require('../index.js');
+var non = require('../');
 
-var n = new NoN.Name('/wentao.shang/test001');
-var i = new NoN.Interest(n);
-i.answerOriginKind = NoN.Interest.ANSWER_NO_CONTENT_STORE;
+var n = new non.Name('/wentao.shang/test001');
+var i = new non.Interest(n);
+i.answerOriginKind = non.Interest.ANSWER_NO_CONTENT_STORE;
 i.interestLifetime = 1234;
 
 console.log('Interest in XML representation:');

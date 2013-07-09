@@ -1,8 +1,8 @@
-var NDN = require('../index.js').NDN;
-var Name = require('../index.js').Name;
-var Interest = require('../index.js').Interest;
-var ContentObject = require('../index.js').ContentObject;
-//var Key = require('../index.js').Key;
+var NDN = require('../').NDN;
+var Name = require('../').Name;
+var Interest = require('../').Interest;
+var ContentObject = require('../').ContentObject;
+//var Key = require('../').Key;
 
 //var key = new Key();
 //key.fromPemFile('./non.pub', './non.pem');

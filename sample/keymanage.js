@@ -1,4 +1,4 @@
-var Key = require('../index.js').Key;
+var Key = require('../').Key;
 
 var key = new Key();
 key.fromPemFile('./non.pub', './non.pem');

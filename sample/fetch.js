@@ -1,6 +1,6 @@
-var NDN = require('../index.js').NDN;
-var Name = require('../index.js').Name;
-var Interest = require('../index.js').Interest;
+var NDN = require('../').NDN;
+var Name = require('../').Name;
+var Interest = require('../').Interest;
 
 var onData = function (interest, co, status) {
     if (status == NDN.CONTENT || status == NDN.CONTENT_UNVERIFIED) {

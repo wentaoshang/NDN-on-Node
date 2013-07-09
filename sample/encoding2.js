@@ -1,10 +1,10 @@
-var Encoder = require('../index.js').BinaryXMLEncoder;
-var Decoder = require('../index.js').BinaryXMLDecoder;
-var Name = require('../index.js').Name;
-var Interest = require('../index.js').Interest;
-var ContentObject = require('../index.js').ContentObject;
-var ContentType = require('../index.js').ContentType;
-var Key = require('../index.js').Key;
+var Encoder = require('../').BinaryXMLEncoder;
+var Decoder = require('../').BinaryXMLDecoder;
+var Name = require('../').Name;
+var Interest = require('../').Interest;
+var ContentObject = require('../').ContentObject;
+var ContentType = require('../').ContentType;
+var Key = require('../').Key;
 
 var n = new Name('/a/b/c.txt');
 
