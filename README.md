@@ -14,7 +14,11 @@ Major changes from NDN.JS:
 Install
 -------
 
-NDN-on-Node is available on npm. Simply run 'npm install ndn-on-node' under your project folder to install the library.
+Simply run 
+
+    npm install ndn-on-node
+
+under your project folder.
 
 Usage
 -----
