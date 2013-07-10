@@ -2,10 +2,6 @@ var NDN = require('../').NDN;
 var Name = require('../').Name;
 var Interest = require('../').Interest;
 var ContentObject = require('../').ContentObject;
-//var Key = require('../').Key;
-
-//var key = new Key();
-//key.fromPemFile('./non.pub', './non.pem');
 
 var onInterest = function (interest) {
     console.log('Interest received in callback.');
@@ -21,8 +17,6 @@ var onInterest = function (interest) {
 };
 
 var ndn = new NDN();
-ndn.setDefaultKey('./non.pub', './non.pem');
-
 var mykey = ndn.getDefaultKey();
 var mykeyname = new Name('/wentao.shang/regtest001/key/').appendKeyID(mykey).appendVersion().appendSegment(0);
 

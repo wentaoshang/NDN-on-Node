@@ -31,7 +31,7 @@ For example:
     var ndn = new NDN();
     ndn.connect();
 
-If you don't publish data, you don't need to set default key for the NDN object. Otherwise, you need to call NDN.setDefaultKey(), which takes two parameters indicating the PEM-encoded public & private key file names. These files can be generated using the following OPENSSL commands:
+NDN object comes with a default RSA key upon creation, which is hard-coded into the JS file. If you want to change the default signing key in NDN object, you need to call NDN.setDefaultKey(), which takes two parameters indicating the PEM-encoded public & private key file names. These files can be generated using the following OPENSSL commands:
 
     openssl genrsa -out non.pem 1024
     openssl rsa -in non.pem -pubout > non.pub

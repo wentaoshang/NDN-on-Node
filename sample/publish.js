@@ -21,8 +21,6 @@ var onInterest = function (interest) {
 };
 
 var ndn = new NDN();
-ndn.setDefaultKey('./non.pub', './non.pem');
-
 var mykey = ndn.getDefaultKey();
 
 ndn.onopen = function () {
