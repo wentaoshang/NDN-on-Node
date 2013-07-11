@@ -2,16 +2,12 @@ var NDN = require('../').NDN;
 var Name = require('../').Name;
 var Interest = require('../').Interest;
 
-var onData = function (interest, co, status) {
-    if (status == NDN.CONTENT || status == NDN.CONTENT_UNVERIFIED) {
-	console.log("ContentObject received in callback.");
-	console.log('Name: ' + co.name.to_uri());
-	console.log('Content: ' + co.content.toString());
-	console.log('ContentObject in XML representation:');
-	console.log(co.to_xml());
-    } else if (status == NDN.CONTENT_BAD) {
-	console.log("Verification failed.");
-    }
+var onData = function (inst, co) {
+    console.log("ContentObject received in callback.");
+    console.log('Name: ' + co.name.to_uri());
+    console.log('Content: ' + co.content.toString());
+    console.log('ContentObject in XML representation:');
+    console.log(co.to_xml());
     
     console.log('Quit script now.');
     ndn.close();  // This will cause the script to quit

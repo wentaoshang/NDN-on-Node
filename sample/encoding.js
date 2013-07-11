@@ -33,7 +33,7 @@ var key = new Key();
 key.fromPemFile('./non.pub', './non.pem');
 
 var co1 = new ContentObject(new Name(n), content);
-co1.sign(key)
+co1.sign(key);
 console.log("Signature is \n" + co1.signature.signature.toString('hex'));
 
 var enc2 = new Encoder();
