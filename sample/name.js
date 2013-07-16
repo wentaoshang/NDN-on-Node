@@ -45,3 +45,8 @@ var n5 = new non.Name('/a/b/c/d');
 
 console.log("----------------------");
 console.log(n4.to_uri() + ' is a prefix of ' + n5.to_uri() + '? ' + n4.isPrefixOf(n5));
+
+var n6 = non.Name.parse(n5.encodeToBinary());
+
+console.log("----------------------");
+console.log('Encode ' + n5.to_uri() + ' to ccnb and parse with Name.parse(). Get ' + n6.to_uri());
