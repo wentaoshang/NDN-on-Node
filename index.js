@@ -8,7 +8,6 @@ exports.SignedInfo = require('./lib/ContentObject.js').SignedInfo;
 exports.Key = require('./lib/Key.js').Key;
 exports.KeyLocator = require('./lib/Key.js').KeyLocator;
 exports.KeyLocatorType = require('./lib/Key.js').KeyLocatorType;
-exports.NoNError = require('./lib/util/NoNError.js').NoNError;
 exports.BinaryXMLDecoder = require('./lib/util/BinaryXMLDecoder.js').BinaryXMLDecoder;
 exports.BinaryXMLEncoder = require('./lib/util/BinaryXMLEncoder.js').BinaryXMLEncoder;
 exports.CCNProtocolDTags = require('./lib/util/CCNProtocolDTags.js').CCNProtocolDTags;
