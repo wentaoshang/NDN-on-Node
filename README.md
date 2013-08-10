@@ -1,7 +1,10 @@
 NDN on Node
 ===========
 
-NDN on Node (NoN) is an NDN library running on Node.js. The usage is quite different from the original browser-based NDN.JS library but more similar to PyCCN in that it is used to implement standalone NDN applications. It features a pure JavaScript implementation with no dependency on CCNx C library (which is true for PyCCN and ndn.cxx C++ library).
+NDN on Node (NoN) is an NDN library running on Node.js. The usage is quite different from the 
+original browser-based NDN.JS library but more similar to PyNDN in that it is used to implement 
+standalone NDN applications. It features a pure JavaScript implementation with no dependency on the 
+NDNx C library (as PyNDN has).
 
 Major changes from NDN.JS:
 
@@ -11,14 +14,9 @@ Major changes from NDN.JS:
 * Use callback-based rather than closure-based NDN event model
 * Significant code cleanup and refactoring
 
-Install
--------
+See the file INSTALL for build and install instructions.
 
-Simply run 
-
-    npm install ndn-on-node
-
-under your project folder.
+NDN on Node is open source under a license described in the file COPYING.  
 
 Usage
 -----

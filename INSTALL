@@ -1,0 +1,9 @@
+NDN on Node Install
+-------------------
+
+Simply run 
+
+    npm install ndn-on-node
+
+under your project folder.
+
