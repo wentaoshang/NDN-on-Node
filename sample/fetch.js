@@ -23,7 +23,7 @@ var onTimeout = function (interest) {
 var ndn = new NDN();
 
 ndn.onopen = function () {
-    var n = new Name('/wentao.shang/regtest001');
+    var n = new Name('/ndn/on/node/test');
     var template = new Interest();
     template.answerOriginKind = Interest.ANSWER_NO_CONTENT_STORE;  // bypass cache in ccnd
     template.interestLifetime = 4000;

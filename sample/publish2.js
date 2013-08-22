@@ -18,10 +18,10 @@ var onInterest = function (interest) {
 
 var ndn = new NDN();
 var mykey = ndn.getDefaultKey();
-var mykeyname = new Name('/wentao.shang/regtest001/key/').appendKeyID(mykey).appendVersion().appendSegment(0);
+var mykeyname = new Name('/ndn/on/node/test/key/').appendKeyID(mykey).appendVersion().appendSegment(0);
 
 ndn.onopen = function () {
-    var n = new Name('/wentao.shang/regtest001');
+    var n = new Name('/ndn/on/node/test');
     ndn.registerPrefix(n, onInterest);
     console.log('Prefix registered.');
 };

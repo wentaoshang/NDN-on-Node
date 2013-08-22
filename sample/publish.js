@@ -24,7 +24,7 @@ var ndn = new NDN();
 var mykey = ndn.getDefaultKey();
 
 ndn.onopen = function () {
-    var n = new Name('/wentao.shang/regtest001');
+    var n = new Name('/ndn/on/node/test');
     ndn.registerPrefix(n, onInterest);
     console.log('Prefix registered.');
 };
