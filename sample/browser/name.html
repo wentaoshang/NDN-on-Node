@@ -1,0 +1,62 @@
+<!DOCTYPE HTML>
+<head>
+    <meta charset="utf-8">
+    <title>Name object test</title>
+	
+    <script src="../../build/ndn.js"></script>
+
+    <script>
+
+function testName () {
+    var result = document.getElementById('result');
+    result.innerHTML = "";
+
+    var n0 = new ndn.Name("/%C1.M.S.localhost/%C1.M.SRV/ccnd/KEY");
+    result.innerHTML += "<p>Name object for '/%C1.M.S.localhost/%C1.M.SRV/ccnd/KEY':"
+                      + "<br />URI representation: " + n0.to_uri() + "</p>";
+    console.log(n0.to_xml());
+    
+    var h = new ndn.NDN();
+    var n1 = new ndn.Name('/ndn.js/%C1%00/test01');
+    n1.appendKeyID(h.getDefaultKey()).appendVersion().appendSegment(0);
+
+    result.innerHTML += "<p>Name for the NDN default key:"
+                      + "<br />URI representation: " + n1.to_uri() + "</p>";
+
+    var n2 = new ndn.Name('/a/b/c.txt/');
+    result.innerHTML += "A new Name object:";
+    result.innerHTML += "<br />URI representation: " + n2.to_uri();
+    var n3 = new ndn.Name(n2);
+    result.innerHTML += "<br />Make a copy:";
+    result.innerHTML += "<br />URI representation: " + n3.to_uri();
+    result.innerHTML += "<br />Make some change to the copy:";
+    n3.appendVersion().appendSegment(0);
+    result.innerHTML += "<br />URI representation: " + n3.to_uri();
+    result.innerHTML += "<br />Original name:";
+    result.innerHTML += "<br />URI representation: " + n2.to_uri();
+
+
+    var n4 = new ndn.Name('/a/b');
+    var n5 = new ndn.Name('/a/b/c/d');
+
+    result.innerHTML += "<p>" + n4.to_uri() + ' is a prefix of ' + n5.to_uri() + '? ' + n4.isPrefixOf(n5) + "</p>";
+
+    var str = "/ndn/ucla.edu/bms/melnitz/data/%C1.M.K%00%F7%18%CCiJ%25%02%07%05%9E%E0%B6%E3%FEB%F1S%20%23%89%DD%2A%19%C1%83w%A6%86%B6%F8%DA%DB";
+    var n6 = new ndn.Name(str);
+    var uri = n6.to_uri();
+    console.log(str);
+    console.log(uri);
+}
+
+    </script>
+
+</head>
+
+<body onload="testName()">
+    
+    <div id="result" style="font-family: Monaco">
+    	
+    </div>
+
+</body>
+</html>

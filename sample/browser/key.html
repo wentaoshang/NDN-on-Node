@@ -1,0 +1,64 @@
+<!DOCTYPE HTML>
+<head>
+    <meta charset="utf-8">
+    <title>Key object test</title>
+    
+    <script src="../../build/ndn.js"></script>
+
+    <script>
+
+function formatPEM (pem) {
+    return pem.replace(/\n/g, '<br />');
+}
+
+function testKey () {
+    var result = document.getElementById('result');
+    result.innerHTML = "";
+
+    var pub = 
+"-----BEGIN PUBLIC KEY-----\n" +
+"MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDDNpgZFC23yGSLsMo8mzTcmdni\n" +
+"pkUHI+i8CYagTEqHO+PnejF9Ep/D+MBvEtPXHSgExsDCHP8X7B6If1df58OWXB9G\n" +
+"PnXUsAsjKKXgOaKoMJr9NZXPqlBbJSrT0h5590hCm2ePPUVkvJKsOX6gCFnptbLz\n" +
+"F7pvb3zKDc+zXjyHPwIDAQAB\n" +
+"-----END PUBLIC KEY-----";
+
+    var pri = 
+"-----BEGIN RSA PRIVATE KEY-----\n" +
+"MIICXAIBAAKBgQDDNpgZFC23yGSLsMo8mzTcmdnipkUHI+i8CYagTEqHO+PnejF9\n" +
+"Ep/D+MBvEtPXHSgExsDCHP8X7B6If1df58OWXB9GPnXUsAsjKKXgOaKoMJr9NZXP\n" +
+"qlBbJSrT0h5590hCm2ePPUVkvJKsOX6gCFnptbLzF7pvb3zKDc+zXjyHPwIDAQAB\n" +
+"AoGBALR4BTayI+3SkblekChlaAJFLVxOUGRgeylTOSV6QjAxWulFWvkAvbijf+tv\n" +
+"oW4uIy//OnZ57g6EmFmiN/mOvo3meBvWijHxUJG1suKrEgG8Gm0LZn0CyycTtutl\n" +
+"ziSDJ3F4whEZfuqciAFOTTgAXPRHMa/cZbSDo4aGR5mbqE0ZAkEA3+HmB/1SgwMB\n" +
+"bopCmkh+sslFhtD2xUxlXnlC3ur4rOmjtH7YE0Q2UDsJFj9eg/BA4fQ/orh9usGv\n" +
+"AVph7o6lswJBAN830Xc7cjxeF3vQyJk1vqqPf15FGvkraq7gHb5MPAtofh78PtzD\n" +
+"+hyblvWAYBstR/K6up1KG+LP6RXA43q7qkUCQA49540wjzQoV8n5X51C6VRkO1kF\n" +
+"J/2LC5PD8P4PQnx1bGWKACLRnwbhioVwyIlqGiaFjBrE07KyqXhTkJFFX8MCQAjW\n" +
+"qfmhpfVT+HQToU3HvgP86Jsv+1Bwcqn3/9WAKUR+X7gUXtzY+bdWRdT0v1l0Iowu\n" +
+"7qK5w37oop8U4y0B700CQBKRizBt1Nc02UMDzdamQsgnRjuIjlfmryfZpemyx238\n" +
+"Q0s2+cKlqbfDOUY/CAj/z1M6RaISQ0TawCX9NIGa9GI=\n" +
+"-----END RSA PRIVATE KEY-----";
+
+    var key = new ndn.Key();
+    key.fromPem(pub, pri);
+    
+    result.innerHTML += "<p>Public Key in PEM: <br />" + formatPEM(key.publicToPEM()) + "</p>";
+    result.innerHTML += "<p>Public Key in HEX: <br />" + DataUtils.toHex(key.publicToDER()) + "</p>";
+    result.innerHTML += "<p>Public Key digest: " + DataUtils.toHex(key.getKeyID()) + "</p>";
+    result.innerHTML += "<p>Private Key in PEM: <br />" + formatPEM(key.privateToPEM()) + "</p>";
+    result.innerHTML += "<p>Private Key in HEX: <br />" + DataUtils.toHex(key.privateToDER()) + "</p>";
+}
+
+    </script>
+
+</head>
+
+<body onload="testKey()">
+    
+    <div id="result" style="font-family: Monaco">
+    	
+    </div>
+
+</body>
+</html>

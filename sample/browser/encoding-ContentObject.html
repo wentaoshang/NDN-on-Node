@@ -1,0 +1,39 @@
+<!DOCTYPE HTML>
+<head>
+    <meta charset="utf-8">
+    <title>ContentObject encoding/decoding test</title>
+	
+    <script src="../../build/ndn.js"></script>
+
+    <script>
+
+function testEncoding () {
+    var content = "NDN on Node";
+    var h = new ndn.NDN();
+    var n = new ndn.Name('/a/b/c.txt');
+
+    var co1 = new ndn.ContentObject(new ndn.Name(n), content);
+    co1.sign(h.getDefaultKey(), {'contentType': ndn.ContentType.KEY});
+    console.log("Signature is \n" + ndn.DataUtils.toHex(co1.signature.signature));
+
+    var p2 = co1.encodeToBinary();
+    var co2 = ndn.ContentObject.parse(p2);
+
+    console.log('Decoded name: ' + co2.name.to_uri());
+    console.log('Decoded content: ' + ndn.DataUtils.toString(co2.content));
+    console.log('Decoded content type: ' + co2.signedInfo.type)
+    //console.log('Content verification passed: ' + co2.verify(h.getDefaultKey()));
+}
+
+    </script>
+
+</head>
+
+<body onload="testEncoding()">
+    
+    <div id="result" style="font-family: Monaco">
+    	Check JavaScript console now.
+    </div>
+
+</body>
+</html>

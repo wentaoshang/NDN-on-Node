@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<head>
+    <meta charset="utf-8">
+    <title>Interest encoding/decoding test</title>
+	
+    <script src="../../build/ndn.js"></script>
+
+    <script>
+
+function testEncoding () {
+    var result = document.getElementById('result');
+    result.innerHTML = "";
+    
+    var n = new ndn.Name('/a/b/c.txt');
+
+    result.innerHTML += "Encoding/Decoding Interest...";
+
+    var i1 = new ndn.Interest(n);
+    i1.interestLifetime = 1000;
+    i1.childSelector = 1;
+    i1.exclude = new ndn.Exclude(['%00%02', ndn.Exclude.ANY, '%00%20']);
+
+    var packet = i1.encodeToBinary();
+
+    var decoder = new ndn.BinaryXMLDecoder(packet);
+    var i2 = new ndn.Interest();
+    i2.from_ccnb(decoder);
+
+    result.innerHTML += "<br />Decoded Interest:";
+    result.innerHTML += "<br />Name: " + i2.name.to_uri();
+    result.innerHTML += "<br />InterestLifetime: " + i2.interestLifetime;
+    result.innerHTML += "<br />ChildSelector: " + i2.childSelector;
+}
+
+    </script>
+
+</head>
+
+<body onload="testEncoding()">
+    
+    <div id="result" style="font-family: Monaco">
+    	
+    </div>
+
+</body>
+</html>

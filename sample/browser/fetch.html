@@ -1,0 +1,53 @@
+<!DOCTYPE HTML>
+<head>
+    <meta charset="utf-8">
+    <title>NDN fetching test</title>
+	
+    <script src="../../build/ndn.js"></script>
+
+    <script>
+
+function testFetch () {
+    var onData = function (interest, co) {
+        console.log("ContentObject received in callback.");
+        console.log('Name: ' + co.name.to_uri());
+        console.log('Content: ' + escape(ndn.DataUtils.toString(co.content)));
+        console.log('ContentObject in XML representation:');
+        console.log(co.to_xml());
+    };
+
+    var onTimeout = function (interest) {
+        console.log("Interest time out.");
+        console.log('Interest name: ' + interest.name.to_uri());
+        ndn.close();
+    };
+
+    
+    var h = new ndn.NDN();
+    
+    h.onopen = function () {
+        var n = new ndn.Name('/ndn/keys');
+        var template = new ndn.Interest();
+        template.answerOriginKind = ndn.Interest.ANSWER_NO_CONTENT_STORE;  // bypass cache in ccnd
+        template.interestLifetime = 1000;
+        h.expressInterest(n, template, onData, onTimeout);
+        console.log('Interest expressed.');
+    };
+    
+    h.connect();
+    
+    console.log('Started...');
+}
+
+    </script>
+
+</head>
+
+<body onload="testFetch()">
+    
+    <div id="result" style="font-family: Monaco">
+    	Check JavaScript console now.
+    </div>
+
+</body>
+</html>

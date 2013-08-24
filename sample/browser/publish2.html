@@ -1,0 +1,69 @@
+<!DOCTYPE HTML>
+<head>
+    <meta charset="utf-8">
+    <title>NDN publishing test</title>
+	
+    <script src="../../build/ndn.js"></script>
+
+    <script>
+
+function testPublish () {
+    var onInterest1 = function (inst) {
+        console.log('Interest received in callback 1.');
+        console.log(inst.name.to_uri());
+        
+        var co = new ndn.ContentObject(inst.name, ('NDN.JS needs refactoring. ' + inst.name.to_uri()));
+        co.sign(mykey, {'keyName':keyname});
+        
+        try {
+            h.send(co);
+        } catch (e) {
+            console.log(e.toString());
+        }
+    };
+
+    var onInterest2 = function (inst) {
+        console.log('Interest received in callback 2.');
+        console.log(inst.name.to_uri());
+        
+        var co = new ndn.ContentObject(inst.name, ('NDN.JS needs refactoring. ' + inst.name.to_uri()));
+        co.sign(mykey, {'keyName':keyname});
+        
+        try {
+            h.send(co);
+        } catch (e) {
+            console.log(e.toString());
+        }
+    };
+
+
+    var h = new ndn.NDN();
+    var mykey = h.getDefaultKey();
+    var keyname = new ndn.Name('/ndn/reg/test/key').appendKeyID(mykey).appendVersion().appendSegment(0);
+
+    h.onopen = function () {
+        var n1 = new ndn.Name('/ndn/reg/test/001');
+        h.registerPrefix(n1, onInterest1);
+        var n2 = new ndn.Name('/ndn/reg/test/002');
+        h.registerPrefix(n2, onInterest2);
+        console.log('Prefix registered.');
+    };
+
+    
+    h.connect();
+    
+    console.log('Started...');
+}
+
+    </script>
+
+</head>
+
+<body onload="testPublish()">
+    
+    <div id="result" style="font-family: Monaco">
+    	Check JavaScript console now.
+    </div>
+
+</body>
+</html>

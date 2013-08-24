@@ -1,0 +1,32 @@
+<!DOCTYPE HTML>
+<head>
+    <meta charset="utf-8">
+    <title>NDN connection test</title>
+	
+    <script src="../../build/ndn.js"></script>
+
+    <script>
+
+function testConnect () {
+    var handle = new ndn.NDN();
+    
+    handle.onopen = function () {
+        console.log('NDN connection established.');
+        handle.close();
+    };
+    
+    handle.connect();
+}
+
+    </script>
+
+</head>
+
+<body onload="testConnect()">
+    
+    <div id="result" style="font-family: Monaco">
+    	Check JavaScript console now.
+    </div>
+
+</body>
+</html>
