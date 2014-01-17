@@ -7,9 +7,6 @@ console.log("Buffers:");
 console.log(name.components);
 console.log("URI representation:");
 console.log(name.to_uri());
-console.log('XML representation:');
-console.log(name.to_xml());
-
 
 var key = new non.Key();
 key.fromPemFile('./non.pub', './non.pem');
@@ -23,8 +20,6 @@ console.log("Buffers:");
 console.log(n1.components);
 console.log("URI representation:");
 console.log(n1.to_uri());
-console.log('XML representation:');
-console.log(n1.to_xml());
 
 console.log("----------------------");
 var n2 = new non.Name('/a/b/c.txt/');
@@ -46,7 +41,10 @@ var n5 = new non.Name('/a/b/c/d');
 console.log("----------------------");
 console.log(n4.to_uri() + ' is a prefix of ' + n5.to_uri() + '? ' + n4.isPrefixOf(n5));
 
-var n6 = non.Name.parse(n5.encodeToBinary());
+var bin = n5.encodeToBinary();
+var n6 = non.Name.parse(bin);
 
 console.log("----------------------");
-console.log('Encode ' + n5.to_uri() + ' to ccnb and parse with Name.parse(). Get ' + n6.to_uri());
+console.log('Encode ' + n5.to_uri() + ' to tlv');
+console.log(bin)
+console.log(' and parse with Name.parse(). Get ' + n6.to_uri());

@@ -1,7 +1,8 @@
 exports.NDN = require('./lib/NDN.js').NDN;
 exports.Name = require('./lib/Name.js').Name;
+exports.NameComponent = require('./lib/NameComponent.js').NameComponent;
 exports.Interest = require('./lib/Interest.js').Interest;
-exports.Exclude = require('./lib/Interest.js').Exclude;
+exports.Exclude = require('./lib/Exclude.js').Exclude;
 exports.ContentObject = require('./lib/ContentObject.js').ContentObject;
 exports.ContentType = require('./lib/ContentObject.js').ContentType;
 exports.SignedInfo = require('./lib/ContentObject.js').SignedInfo;
@@ -13,3 +14,5 @@ exports.BinaryXMLEncoder = require('./lib/util/BinaryXMLEncoder.js').BinaryXMLEn
 exports.CCNProtocolDTags = require('./lib/util/CCNProtocolDTags.js').CCNProtocolDTags;
 exports.CCNProtocolDTagsStrings = require('./lib/util/CCNProtocolDTags.js').CCNProtocolDTagsStrings;
 exports.DataUtils = require('./lib/util/DataUtils.js').DataUtils;
+exports.Block = require('./lib/util/Block.js').Block;
+exports.NdnType = require('./lib/util/NdnType.js').NdnType;

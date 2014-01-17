@@ -1,24 +1,24 @@
 var non = require('../');
 
-var n = new non.Name('/wentao.shang/test001');
-var i = new non.Interest(n);
-i.answerOriginKind = non.Interest.ANSWER_NO_CONTENT_STORE;
-i.interestLifetime = 1234;
+// This filter is meaningless, just for test purpose
+var filter = new non.Exclude (['before', non.Exclude.Any, new Buffer ('after', 'ascii'), non.Exclude.Any, '%00%10']);
+console.log (filter);
 
-// XXX: this filter is meaningless, just for test purpose
-var filter = new non.Exclude(['before', non.Exclude.ANY, new Buffer('after', 'ascii'), non.Exclude.ANY, '%00%10']);
-i.exclude = filter;
+console.log ('Encode exclude filter:');
+var bin = filter.encodeToBinary ();
+console.log (bin);
 
-console.log('Interest with random Exclude:');
-console.log(i.to_xml());
+var f = non.Exclude.parse (bin);
+console.log ('Decode back:');
+console.log (f.to_uri ());
 
 // Test Exlucde.matches()
-var filter1 = new non.Exclude(['%00%02', non.Exclude.ANY, '%00%20']);
-console.log('Meaningful Exclude:');
-console.log(filter1.to_xml());
+var filter1 = new non.Exclude (['%00%02', non.Exclude.Any, '%00%20']);
+console.log ('Meaningful Exclude:');
+console.log (filter1);
 
-var comp1 = non.Name.stringComponentToBuffer('%00%01');
-var comp2 = non.Name.stringComponentToBuffer('%00%0F');
-console.log('Matches:');
-console.log(non.Name.toEscapedString(comp1) + ' ? ' + filter1.matches(comp1));
-console.log(non.Name.toEscapedString(comp2) + ' ? ' + filter1.matches(comp2));
+var comp1 = non.NameComponent.from_string ('%00%01');
+var comp2 = non.NameComponent.from_string ('%00%0F');
+console.log ('Matches:');
+console.log (comp1.toEscapedString () + ' ? ' + filter1.matches (comp1));
+console.log (comp2.toEscapedString () + ' ? ' + filter1.matches (comp2));
