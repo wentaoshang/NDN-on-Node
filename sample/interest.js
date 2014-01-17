@@ -1,22 +1,34 @@
-var non = require('../');
+var ndn = require ('../');
+var util = require ('util');
 
-var n = new non.Name('/wentao.shang/test001');
-var i = new non.Interest(n);
-i.answerOriginKind = non.Interest.ANSWER_NO_CONTENT_STORE;
-i.interestLifetime = 1234;
+var n = new ndn.Name ('/a/b/c.txt');
+var i = new ndn.Interest (n);
 
-console.log('Interest in XML representation:');
-console.log(i.to_xml());
+var sel = new ndn.Selectors ();
+sel.minSuffix = 1;
+sel.maxSuffix = 1;
+sel.exclude = new ndn.Exclude ([ndn.Exclude.Any, '%00%20']);
+sel.childSelector = 0;
+sel.fresh = true;
 
-var n1 = new non.Name('/a/b/c.txt');
-var i1 = new non.Interest(n1);
-i1.interestLifetime = 1000;
-i1.childSelector = 1;
-i1.exclude = new non.Exclude(['%00%02', non.Exclude.ANY, '%00%20']);
-console.log(i1.to_xml());
+i.selectors = sel;
+i.interestLifetime = 1000;
+
+console.log ('Original Interest:');
+console.log (util.inspect (i, false, null));
+
+var bin = i.encodeToBinary ();
+
+console.log ('Encode:');
+console.log (bin);
+
+var i1 = ndn.Interest.parse (bin);
+
+console.log ('Decode back:');
+console.log (util.inspect (i1, false, null));
     
-var name1 = new non.Name('/a/b/c.txt/%00%01');
-var name2 = new non.Name('/a/b/c.txt/%00%0F');
-console.log('Interest matches Name:');
-console.log(name1.to_uri() + ' ? ' + i1.matches_name(name1));
-console.log(name2.to_uri() + ' ? ' + i1.matches_name(name2));
+var name1 = new ndn.Name ('/a/b/c.txt/%00%01');
+var name2 = new ndn.Name ('/a/b/c.txt/%00%0F');
+console.log ('Interest matches Name:');
+console.log (name1.to_uri () + ' ? ' + i1.matches_name (name1));
+console.log (name2.to_uri () + ' ? ' + i1.matches_name (name2));

@@ -2,6 +2,7 @@ exports.NDN = require('./lib/NDN.js').NDN;
 exports.Name = require('./lib/Name.js').Name;
 exports.NameComponent = require('./lib/NameComponent.js').NameComponent;
 exports.Interest = require('./lib/Interest.js').Interest;
+exports.Selectors = require('./lib/Selectors.js').Selectors;
 exports.Exclude = require('./lib/Exclude.js').Exclude;
 exports.ContentObject = require('./lib/ContentObject.js').ContentObject;
 exports.ContentType = require('./lib/ContentObject.js').ContentType;
