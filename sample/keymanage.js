@@ -1,6 +1,6 @@
 var Key = require('../').Key;
 
-var key = new Key();
+var key = new Key('/ndn/js/default/key');
 key.fromPemFile('./non.pub', './non.pem');
 
 console.log('Public key DER:\n' + key.publicToDER().toString('hex'));
