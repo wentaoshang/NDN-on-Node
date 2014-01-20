@@ -5,10 +5,8 @@ var on_data = function (inst, data)
 {
     console.log ("Data received in callback.");
     console.log ('Name: ' + data.name.to_uri ());
-    console.log ('Content: ');
-    console.log (util.inspect (data.content, false, null));
-    
-    console.log ('Exit script.');
+    console.log ('Data: ');
+    console.log (util.inspect (data, false, null));
     face.close ();  // This will cause the script to exit
 };
 
@@ -16,7 +14,6 @@ var on_timeout = function (interest)
 {
     console.log ("Interest time out.");
     console.log ('Interest name: ' + interest.name.to_uri ());
-    console.log ('Exit script.');
     face.close ();
 };
 
