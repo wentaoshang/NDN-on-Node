@@ -8,7 +8,7 @@ console.log(name.components);
 console.log("URI representation:");
 console.log(name.to_uri());
 
-var key = new non.Key();
+var key = new non.Key(new non.Name('/wentao/shang/key'));
 key.fromPemFile('./non.pub', './non.pem');
 
 var n1 = new non.Name('/wentao.shang/%C1%00/test001');

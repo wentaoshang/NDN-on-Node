@@ -1,4 +1,4 @@
-exports.NDN = require('./lib/NDN.js').NDN;
+exports.Face = require('./lib/Face.js').Face;
 exports.Name = require('./lib/Name.js').Name;
 exports.NameComponent = require('./lib/NameComponent.js').NameComponent;
 exports.Interest = require('./lib/Interest.js').Interest;
@@ -9,6 +9,5 @@ exports.MetaInfo = require('./lib/MetaInfo.js').MetaInfo;
 exports.Signature = require('./lib/Signature.js').Signature;
 exports.Key = require('./lib/Key.js').Key;
 exports.KeyLocator = require('./lib/KeyLocator.js').KeyLocator;
-exports.DataUtils = require('./lib/util/DataUtils.js').DataUtils;
-exports.Block = require('./lib/util/Block.js').Block;
-exports.NdnType = require('./lib/util/NdnType.js').NdnType;
+exports.Block = require('./lib/Block.js').Block;
+exports.NdnType = require('./lib/NdnType.js').NdnType;

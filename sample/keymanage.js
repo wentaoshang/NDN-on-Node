@@ -1,6 +1,7 @@
+var Name = require('../').Name;
 var Key = require('../').Key;
 
-var key = new Key('/ndn/js/default/key');
+var key = new Key(new Name('/ndn/js/default/key'));
 key.fromPemFile('./non.pub', './non.pem');
 
 console.log('Public key DER:\n' + key.publicToDER().toString('hex'));
