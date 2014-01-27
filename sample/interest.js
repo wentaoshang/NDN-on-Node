@@ -28,7 +28,7 @@ console.log ('Decode back:');
 console.log (util.inspect (i1, false, null));
     
 var name1 = new ndn.Name ('/a/b/c.txt/%00%01');
-var name2 = new ndn.Name ('/a/b/c.txt/%00%0F');
+var name2 = new ndn.Name ('/a/b/c.txt/%00%2F');
 console.log ('Interest matches Name:');
 console.log (name1.to_uri () + ' ? ' + i1.matches_name (name1));
 console.log (name2.to_uri () + ' ? ' + i1.matches_name (name2));

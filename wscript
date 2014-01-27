@@ -1,6 +1,6 @@
 # -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
 
-VERSION='0.2'
+VERSION='0.3'
 APPNAME='ndnjs'
 
 YUICOMPRESSOR_URL="http://github.com/downloads/yui/yuicompressor/"
@@ -86,22 +86,19 @@ def build (bld):
 
         ndnjs = ["lib/WebSocketTransport.js",
                  "lib/browser/browserify.js",
-                 "lib/util/CCNProtocolDTags.js",
-                 "lib/util/CCNTime.js",
-                 "lib/util/DataUtils.js",
+                 "lib/Block.js",
+                 "lib/NdnType.js",
                  "lib/Name.js",
-                 "lib/ContentObject.js",
+                 "lib/Data.js",
                  "lib/Interest.js",
                  "lib/Key.js",
-                 "lib/PublisherID.js",
-                 "lib/PublisherPublicKeyDigest.js",
-                 "lib/ForwardingEntry.js",
-                 "lib/util/DynamicBuffer.js",
-                 "lib/util/BinaryXMLEncoder.js",
-                 "lib/util/BinaryXMLDecoder.js",
-                 "lib/util/BinaryXMLStructureDecoder.js",
-                 "lib/util/BinaryXMLElementReader.js",
-                 "lib/NDN.js"] + securityLib
+                 "lib/KeyLocator.js",
+                 "lib/MetaInfo.js",
+                 "lib/Signature.js",
+                 "lib/Exclude.js",
+                 "lib/Selectors.js",
+                 "lib/NameComponent.js",
+                 "lib/Face.js"] + securityLib
 
         ndnjs = bld (features="combine",
                      target="ndn",
