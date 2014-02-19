@@ -1,3 +1,8 @@
+Notice
+======
+
+The development of this repo has been permanently stopped. Please refer to https://github.com/named-data/ndn-js for the latest version of NDN.JS.
+
 NDN.JS: A pure JavaScript NDN client library
 ============================================
 
